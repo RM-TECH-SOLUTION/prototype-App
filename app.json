@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "AR-Fashion",
+    "slug": "pp-app",
+    "version": "1.0.4",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.p.rammohanrao.ppapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.p.rammohanrao.ppapp",
+      "permissions": [
+    "BLUETOOTH",
+    "BLUETOOTH_ADMIN",
+    "BLUETOOTH_CONNECT",
+    "BLUETOOTH_SCAN"
+  ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "75595a53-908a-48c4-a64d-b418a3617d8d"
+      }
+    },
+    "owner": "p.rammohanrao",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/75595a53-908a-48c4-a64d-b418a3617d8d"
+    },
+    "rmtech": {
+      "merchantId":"7",
+      "baseUrl":"https://api.rmtechsolution.com/"
+    }
+  }
+}

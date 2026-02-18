@@ -1,0 +1,233 @@
+import { create } from "zustand";
+import apiClient from "../api/apiClient";
+
+const orderingStore = create((set, get) => ({
+  /* ======================================================
+     STATE
+  ====================================================== */
+
+  loading: false,
+  success: false,
+  errorMessage: null,
+
+  // Catalog
+  catalogModels: [],
+  catalogItems: [],
+  selectedCatalogId: null,
+
+  // Cart
+  cartItems: [],
+  merchantData:null,
+
+  /* ======================================================
+     📦 GET CATALOG MODELS
+  ====================================================== */
+
+  getCatalogModels: async () => {
+    set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.get(
+        apiClient.Urls.getCatalogueModels
+      );
+
+      console.log("📦 getCatalogModels →", res);
+
+      if (res?.success) {
+        set({ catalogModels: res.data || [] });
+      } else {
+        set({
+          catalogModels: [],
+          errorMessage: res?.message || "Failed to load catalogs",
+        });
+      }
+    } catch (err) {
+      console.log("getCatalogModels error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  /* ======================================================
+     🧾 GET ITEMS BY CATALOG
+  ====================================================== */
+
+  getCatalogItems: async (catalogueModelId) => {
+    set({
+      loading: true,
+      errorMessage: null,
+      selectedCatalogId: catalogueModelId,
+    });
+
+    try {
+      const res = await apiClient.get(
+        apiClient.Urls.getCatalogueItems,
+        { catalogueModelId }
+      );
+
+      console.log("🧾 getCatalogItems →", res);
+
+      if (res?.success) {
+        set({ catalogItems: res.data || [] });
+      } else {
+        set({
+          catalogItems: [],
+          errorMessage: res?.message || "No items found",
+        });
+      }
+    } catch (err) {
+      console.log("getCatalogItems error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  /* ======================================================
+     🛒 GET CART
+  ====================================================== */
+
+  getCart: async () => {
+    set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.get(apiClient.Urls.getCart);
+
+      console.log("🛒 getCart →", res);
+
+      if (res?.success) {
+        set({ cartItems: res.cart || [] });
+      } else {
+        set({
+          cartItems: [],
+          errorMessage: res?.message || "Cart empty",
+        });
+      }
+    } catch (err) {
+      console.log("getCart error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+    getMerchant: async () => {
+    set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.get(apiClient.Urls.getMerchant);
+
+      console.log(res,"resresjjgj");
+      
+
+      if (res?.success) {
+        set({ merchantData: res.data || [] });
+      } else {
+        set({
+          merchantData: [],
+          errorMessage: res?.message || "merchant empty",
+        });
+      }
+    } catch (err) {
+      console.log("merchantData error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  /* ======================================================
+     ➕ ADD TO CART
+  ====================================================== */
+
+  addToCart: async ({ item_id, item_name, price, quantity = 1 }) => {
+    set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.post(
+        apiClient.Urls.getAddCart,
+        { item_id, item_name, price, quantity }
+      );
+
+      console.log("➕ addToCart →", res);
+
+      if (res?.success) {
+        get().getCart();
+      } else {
+        set({ errorMessage: res?.message || "Add to cart failed" });
+      }
+    } catch (err) {
+      console.log("addToCart error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  /* ======================================================
+     🔁 UPDATE QTY
+  ====================================================== */
+
+  updateQty: async (cart_id, type) => {
+    set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.post(
+        apiClient.Urls.updateCartQty,
+        { cart_id, type }
+      );
+
+      console.log("🔁 updateQty →", res);
+
+      if (res?.success) {
+        get().getCart();
+      } else {
+        set({ errorMessage: res?.message || "Update failed" });
+      }
+    } catch (err) {
+      console.log("updateQty error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  /* ======================================================
+     🗑 DELETE CART ITEM
+  ====================================================== */
+
+  deleteCartItem: async (cart_id) => {
+    set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.post(
+        apiClient.Urls.deleteCartItem,
+        { cart_id }
+      );
+
+      console.log("🗑 deleteCartItem →", res);
+
+      if (res?.success) {
+        get().getCart();
+      } else {
+        set({ errorMessage: res?.message || "Delete failed" });
+      }
+    } catch (err) {
+      console.log("deleteCartItem error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+}));
+
+export default orderingStore;
