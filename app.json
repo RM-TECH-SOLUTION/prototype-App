@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "AR-Fashion",
-    "slug": "pp-app",
-    "version": "1.0.4",
+    "name": "Prototype-app",
+    "slug": "prototype-app",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.p.rammohanrao.ppapp",
+      "bundleIdentifier": "com.rmtechsolution.prototypeapp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -26,7 +26,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.p.rammohanrao.ppapp",
+      "package": "com.rmtechsolution.prototypeapp",
       "permissions": [
     "BLUETOOTH",
     "BLUETOOTH_ADMIN",
@@ -39,15 +39,15 @@
     },
     "extra": {
       "eas": {
-        "projectId": "75595a53-908a-48c4-a64d-b418a3617d8d"
+        "projectId": "eaa2e69a-390e-40a4-a107-2718d48a50fe"
       }
     },
-    "owner": "p.rammohanrao",
+    "owner": "rm-tech-solution",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/75595a53-908a-48c4-a64d-b418a3617d8d"
+      "url": "https://u.expo.dev/eaa2e69a-390e-40a4-a107-2718d48a50fe"
     },
     "rmtech": {
       "merchantId":"7",
