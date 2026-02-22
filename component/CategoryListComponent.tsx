@@ -13,7 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 10;
-const CARD_WIDTH = (width - 60) / 2;
+const CARD_WIDTH = (width - 120) / 2;
 
 /* ================= IMAGE NORMALIZER ================= */
 
@@ -68,12 +68,15 @@ const CategoryListComponent = ({
     cartItems.forEach((item) => {
       map[item.item_id] = {
         quantity: Number(item.quantity),
-        cart_id: item.id,
+        cart_id: item.cart_id,
       };
     });
 
     setCart(map);
   }, [cartItems]);
+
+  console.log(cartItems,"cartItems");
+  
 
   /* ======================================================
      OPEN CATEGORY MODAL INITIALLY
@@ -132,6 +135,9 @@ const CategoryListComponent = ({
   };
 
   const handleIncrease = async (item) => {
+
+    console.log(item,"itemhjkhkhk");
+    
     await updateQty(cart[item.id].cart_id, "inc");
     await getCart();   // 🔥 refresh
   };
@@ -157,7 +163,7 @@ const CategoryListComponent = ({
       isItem && (index === total - 1 || index === total - 2);
 
     return (
-      <View style={{ marginBottom: isLastRow ? 120 : 20 }}>
+      <View style={{ margin:10 }}>
         <View style={styles.card}>
 
           <Image
@@ -348,7 +354,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     width: CARD_WIDTH,
-    height: 150,
+    height: 120,
     justifyContent: "center",
     alignItems: "center",
     margin: CARD_MARGIN,

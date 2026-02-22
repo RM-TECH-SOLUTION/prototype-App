@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState,useEffect } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,25 @@ import {
   FlatList,
   SafeAreaView,
   StatusBar,
-  Alert
+  Alert,
+  Image
 } from "react-native";
 
 import RazorpayCheckout from "react-native-razorpay";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import useSessionStore from "../store/useSessionStore";
+import AddAddressComponent from "./AddAddressComponent";
 
 const CheckoutComponent = ({
   cartItems = [],
   getCart,
-  merchantData
+  merchantData,
+  updateQty,
+  deleteCartItem,
+  clearCart,
+  saveUserAddress,
+  getProfile,profile
 }) => {
 
   const navigation = useNavigation();
@@ -26,9 +33,16 @@ const CheckoutComponent = ({
   const { user} = useSessionStore();
   const keyId = merchantData?.keyId
   const keySecret = merchantData?.keySecret
+  const [selectedAddress, setSelectedAddress] = useState(null);
+
+  useEffect(() => {
+  if (profile?.address) {
+    setSelectedAddress(profile.address);
+  }
+}, [profile]);
 
 
-  console.log(keyId,keySecret,"useruser",merchantData?.merchantId);
+  console.log(profile,"useruser selectedAddress",);
   
 
   /* ================= TOTAL ================= */
@@ -54,7 +68,7 @@ const CheckoutComponent = ({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      amount: Number(1),                 // use total later
+      amount: Number(total),               
       merchant_id: merchantData?.merchantId,
 
       // 🔑 Razorpay Keys
@@ -124,6 +138,7 @@ const CheckoutComponent = ({
 
       RazorpayCheckout.open(options)
         .then(() => {
+          clearCart()
           Alert.alert("Success", "Payment successful");
           getCart();
           navigation.navigate("Home");
@@ -140,14 +155,92 @@ const CheckoutComponent = ({
     }
   };
 
+
+  const handleIncrease = async (item) => {
+
+    await updateQty(item?.cart_id, "inc");
+    await getCart();   // 🔥 refresh
+  };
+
+    const handleDecrease = async (item) => {
+      await updateQty(item?.cart_id, "dec");
+    await getCart();   // 🔥 refresh
+  };
+
+  const deleteCart = async (item) =>{
+    await deleteCartItem(item?.cart_id)
+  }
+
   /* ================= ITEM UI ================= */
 
-  const renderItem = ({ item }) => (
-    <View style={styles.item}>
-      <Text style={styles.name}>{item.item_name}</Text>
-      <Text>₹{item.total}</Text>
+  console.log(cartItems,"cartItemshhh");
+  // Nothing found in your cart
+
+  // ORDER NOW
+  
+
+
+
+const renderItem = ({ item }) => {
+  console.log(item, "itemitem list");
+  const imageUrl = item.images
+  ? JSON.parse(item.images)[0]
+  : null;
+
+  return (
+    <View style={styles.itemCard}>
+
+      {/* LEFT SIDE */}
+      <View style={{ flexDirection: "row", flex: 1 }}>
+
+        {/* PRODUCT IMAGE */}
+        <Image
+          source={{ uri: imageUrl}}
+          style={styles.productImage}
+          resizeMode="cover"
+        />
+
+        {/* DETAILS */}
+        <View style={styles.leftSection}>
+          <Text style={styles.name}>{item.item_name}</Text>
+
+          {/* QTY CONTROLS */}
+          <View style={styles.qtyRow}>
+            <TouchableOpacity style={styles.qtyBtn} 
+            onPress={()=>{
+              handleDecrease(item)
+            }}>
+              <Text style={styles.qtyBtnText}>-</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.qtyValue}>{item.quantity}</Text>
+
+            <TouchableOpacity style={styles.qtyBtn}
+            onPress={()=>{
+              handleIncrease(item)
+            }}
+            >
+              <Text style={styles.qtyBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {/* RIGHT SIDE */}
+      <View style={styles.rightSection}>
+        <Text style={styles.price}>₹{item.total}</Text>
+        <TouchableOpacity 
+        onPress={()=>{
+          deleteCart(item)
+        }}
+        >
+        <Ionicons name="trash-outline" size={22} color="red" />
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -159,12 +252,74 @@ const CheckoutComponent = ({
         <View style={{ width: 25 }} />
       </View>
 
+       {cartItems.length < 1 ?
+      <View style={{width:"100%",height:"100%",justifyContent:"center",alignItems:"center"}}>
+      <View style={{}}>
+        <Text style={{fontSize:20}}> Nothing found in your cart</Text>
+      </View>
+      {/* <TouchableOpacity style={{marginTop:20,padding:10,backgroundColor:"#FF8C00",borderRadius:10}}>
+        <Text style={{color:"#fff",fontSize:15,fontWeight:"bold"}}>Order Now</Text>
+      </TouchableOpacity> */}
+      </View>
+
+      :
+        <>
+
       <FlatList
         data={cartItems}
-        keyExtractor={i => i.id.toString()}
+        keyExtractor={i => i.cart_id.toString()}
         renderItem={renderItem}
       />
 
+      {/* ===== DELIVERY ADDRESS ===== */}
+
+{selectedAddress ? (
+
+  <View style={styles.addressCard}>
+
+    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+      <Text style={styles.addressTitle}>Delivery Address</Text>
+
+      <TouchableOpacity onPress={() => setSelectedAddress(null)}>
+        <Text style={styles.changeText}>Change</Text>
+      </TouchableOpacity>
+    </View>
+
+    <Text style={styles.addressText}>
+      {selectedAddress.building}, {selectedAddress.doorNo}
+    </Text>
+
+    <Text style={styles.addressText}>
+      {selectedAddress.street}
+    </Text>
+
+    {selectedAddress.landmark ? (
+      <Text style={styles.addressText}>
+        Landmark: {selectedAddress.landmark}
+      </Text>
+    ) : null}
+
+    <Text style={styles.addressText}>
+      {selectedAddress.city} - {selectedAddress.pincode}
+    </Text>
+    <Text style={styles.addressText}>
+      {profile.phone}
+    </Text>
+
+  </View>
+
+) : (
+
+  <AddAddressComponent
+    onSave={(data) => {
+      setSelectedAddress(data);
+      saveUserAddress(data)
+      Alert.alert("Address Saved");
+      getProfile()
+    }}
+  />
+
+)}
       <View style={styles.bottom}>
         <Text style={styles.total}>Total: ₹{total}</Text>
 
@@ -178,6 +333,8 @@ const CheckoutComponent = ({
           </Text>
         </TouchableOpacity>
       </View>
+      </>
+      }
     </SafeAreaView>
   );
 };
@@ -213,7 +370,11 @@ const styles = StyleSheet.create({
 
   bottom: {
     backgroundColor: "#fff",
-    padding: 20
+    padding: 20,
+    borderTopWidth:1,
+    borderLeftWidth:1,
+    borderRightWidth:1,
+    elevation:2
   },
 
   total: {
@@ -233,5 +394,89 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700"
-  }
+  },
+  itemCard: {
+  backgroundColor: "#fff",
+  marginHorizontal: 12,
+  marginVertical: 6,
+  padding: 14,
+  borderRadius: 12,
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  elevation: 3
+},
+
+leftSection: {
+  flex: 1
+},
+
+rightSection: {
+  alignItems: "flex-end"
+},
+
+price: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#FF8C00",
+  marginBottom: 6
+},
+qtyRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginTop: 6
+},
+
+qtyBtn: {
+  width: 28,
+  height: 28,
+  borderRadius: 6,
+  backgroundColor: "#FF8C00",
+  alignItems: "center",
+  justifyContent: "center"
+},
+
+qtyBtnText: {
+  color: "#fff",
+  fontSize: 18,
+  fontWeight: "700"
+},
+
+qtyValue: {
+  marginHorizontal: 10,
+  fontSize: 15,
+  fontWeight: "700",
+  color: "#333"
+},
+productImage: {
+  width: 70,
+  height: 70,
+  borderRadius: 8,
+  marginRight: 10,
+  backgroundColor: "#eee"
+},
+addressCard: {
+  backgroundColor: "#fff",
+  margin: 12,
+  padding: 14,
+  borderRadius: 12,
+  elevation: 2
+},
+
+addressTitle: {
+  fontSize: 16,
+  fontWeight: "700",
+  marginBottom: 6
+},
+
+addressText: {
+  fontSize: 14,
+  color: "#444",
+  marginBottom: 2
+},
+
+changeText: {
+  color: "#FF8C00",
+  fontWeight: "700"
+},
 });

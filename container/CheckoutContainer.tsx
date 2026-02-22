@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CheckoutComponent from "../component/CheckoutComponent";
 import orderingStore from "../store/orderingStore";
+import useAuthStore from "../store/useAuthStore";
 
 const CheckoutContainer = ({ navigation }) => {
   const {
@@ -11,12 +12,15 @@ const CheckoutContainer = ({ navigation }) => {
     updateQty,
     deleteCartItem,
     getMerchant,
-    merchantData
+    merchantData,
+    clearCart
   } = orderingStore();
+  const {saveUserAddress,getProfile,profile} = useAuthStore()
 
   useEffect(() => {
     getCart();
     getMerchant()
+    getProfile()
   }, []);
   console.log(merchantData,"merchantData");
   
@@ -31,6 +35,10 @@ const CheckoutContainer = ({ navigation }) => {
         deleteCartItem={deleteCartItem}
         getCart={getCart}
         merchantData={merchantData}
+        clearCart={clearCart}
+        saveUserAddress={saveUserAddress}
+        profile={profile}
+        getProfile={getProfile}
       />
     </SafeAreaView>
   );
