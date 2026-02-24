@@ -8,20 +8,26 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Modal
+  Modal,
+  ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
 
 const AddAddressComponent = ({ onSave }) => {
 
+  /* ---------------- STATES ---------------- */
+
   const [showModal, setShowModal] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+
   // ✅ Serviceable pincodes
-const SERVICEABLE_PINCODES = [
-  "502032",
-  "500002",
-  "500003",
-  "500004"
-];
+  const SERVICEABLE_PINCODES = [
+    "502032",
+    "500002",
+    "500003",
+    "500004"
+  ];
 
   const [address, setAddress] = useState({
     building: "",
@@ -32,27 +38,72 @@ const SERVICEABLE_PINCODES = [
     pincode: ""
   });
 
-const handleSave = () => {
-  if (
-    !address.building ||
-    !address.doorNo ||
-    !address.street ||
-    !address.city ||
-    !address.pincode
-  ) {
-    alert("Please fill all required fields");
-    return;
-  }
+  /* ---------------- LIVE LOCATION ---------------- */
 
-  // ✅ PINCODE CHECK
-  if (!SERVICEABLE_PINCODES.includes(address.pincode)) {
-    alert("Service not available in this area");
-    return;
-  }
+  const getLiveLocation = async () => {
+    try {
+      setLoadingLocation(true);
 
-  onSave(address);
-  setShowModal(false);
-};
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Location permission denied");
+        setLoadingLocation(false);
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High
+      });
+
+      const addressResponse = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      });
+
+      if (addressResponse.length > 0) {
+        const loc = addressResponse[0];
+
+        setAddress({
+          building: loc.name || "",
+          doorNo: "",
+          street: loc.street || "",
+          landmark: "",
+          city: loc.city || loc.subregion || "",
+          pincode: loc.postalCode || ""
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      alert("Unable to fetch location");
+    } finally {
+      setLoadingLocation(false);
+    }
+  };
+
+  /* ---------------- SAVE ---------------- */
+
+  const handleSave = () => {
+    if (
+      !address.building ||
+      !address.doorNo ||
+      !address.street ||
+      !address.city ||
+      !address.pincode
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (!SERVICEABLE_PINCODES.includes(address.pincode)) {
+      alert("Service not available in this area");
+      return;
+    }
+
+    onSave(address);
+    setShowModal(false);
+  };
+
+  /* ---------------- UI ---------------- */
 
   return (
     <View>
@@ -65,24 +116,17 @@ const handleSave = () => {
         <Text style={styles.addText}>+ Add Delivery Address</Text>
       </TouchableOpacity>
 
-      {/* POPUP MODAL */}
-      <Modal
-        visible={showModal}
-        animationType="slide"
-        transparent
-      >
+      {/* MODAL */}
+      <Modal visible={showModal} animationType="slide" transparent>
         <View style={styles.overlay}>
 
           <KeyboardAvoidingView
-           
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
 
             <View style={styles.modalContainer}>
 
-              <ScrollView
-                contentContainerStyle={{ paddingBottom: 30 }}
-               
-              >
+              <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
 
                 {/* HEADER */}
                 <View style={styles.header}>
@@ -92,6 +136,29 @@ const handleSave = () => {
                     <Ionicons name="close" size={22} color="#333" />
                   </TouchableOpacity>
                 </View>
+
+                {/* LIVE LOCATION BUTTON */}
+                <TouchableOpacity
+                  style={styles.locationBtn}
+                  onPress={getLiveLocation}
+                >
+                  {loadingLocation ? (
+                    <ActivityIndicator color="#FF8C00" />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name="location-outline"
+                        size={18}
+                        color="#FF8C00"
+                      />
+                      <Text style={styles.locationText}>
+                        Use Live Location
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {/* INPUTS */}
 
                 <TextInput
                   placeholder="Building / Apartment Name"
@@ -148,7 +215,11 @@ const handleSave = () => {
                   }
                 />
 
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+                {/* SAVE BUTTON */}
+                <TouchableOpacity
+                  style={styles.saveBtn}
+                  onPress={handleSave}
+                >
                   <Text style={styles.saveText}>Save Address</Text>
                 </TouchableOpacity>
 
@@ -170,6 +241,7 @@ export default AddAddressComponent;
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
+
   addBtn: {
     margin: 12,
     padding: 14,
@@ -179,6 +251,7 @@ const styles = StyleSheet.create({
     borderColor: "#FF8C00",
     alignItems: "center"
   },
+
   addText: {
     color: "#FF8C00",
     fontSize: 15,
@@ -211,6 +284,23 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
 
+  locationBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#FF8C00",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12
+  },
+
+  locationText: {
+    color: "#FF8C00",
+    fontWeight: "700",
+    marginLeft: 6
+  },
+
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -231,4 +321,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700"
   }
+
 });
