@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
-  Image
+  Image,
+  Modal
 } from "react-native";
 
 import RazorpayCheckout from "react-native-razorpay";
@@ -34,6 +35,8 @@ const CheckoutComponent = ({
   const keyId = merchantData?.keyId
   const keySecret = merchantData?.keySecret
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+const [paymentMethod, setPaymentMethod] = useState(null);
 
   useEffect(() => {
   if (profile?.address) {
@@ -326,7 +329,7 @@ const renderItem = ({ item }) => {
         <TouchableOpacity
           style={styles.payBtn}
           disabled={loading}
-          onPress={payNow}
+          onPress={() => setShowPaymentModal(true)}
         >
           <Text style={styles.payText}>
             {loading ? "Processing..." : `Pay ₹${total}`}
@@ -335,6 +338,74 @@ const renderItem = ({ item }) => {
       </View>
       </>
       }
+      {/* ===== PAYMENT METHOD MODAL ===== */}
+<Modal visible={showPaymentModal} transparent animationType="slide">
+
+  <View style={styles.modalOverlay}>
+
+    <View style={styles.paymentSheet}>
+
+     <View style={styles.sheetHeader}>
+
+  <Text style={styles.sheetTitle}>Choose Payment Method</Text>
+
+  <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
+    <Ionicons name="close" size={22} color="#333" />
+  </TouchableOpacity>
+
+</View>
+
+      {/* ONLINE */}
+      <TouchableOpacity
+        style={[
+          styles.paymentOption,
+          paymentMethod === "online" && styles.activeOption
+        ]}
+        onPress={() => setPaymentMethod("online")}
+      >
+        <Text style={styles.optionText}>Pay Online</Text>
+        <Text style={styles.optionAmount}>₹{total}</Text>
+      </TouchableOpacity>
+
+      {/* COD */}
+      <TouchableOpacity
+        style={[
+          styles.paymentOption,
+          paymentMethod === "cod" && styles.activeOption
+        ]}
+        onPress={() => setPaymentMethod("cod")}
+      >
+        <Text style={styles.optionText}>Cash on Delivery</Text>
+        <Text style={styles.optionAmount}>₹{total}</Text>
+      </TouchableOpacity>
+
+      {/* CONTINUE */}
+      <TouchableOpacity
+        style={[
+          styles.continueBtn,
+          !paymentMethod && { opacity: 0.5 }
+        ]}
+        disabled={!paymentMethod}
+        onPress={() => {
+          setShowPaymentModal(false);
+
+          if (paymentMethod === "online") {
+            payNow();
+          } else {
+            Alert.alert("Order Placed", "Cash on Delivery selected");
+            clearCart();
+            getCart();
+            navigation.navigate("Home");
+          }
+        }}
+      >
+        <Text style={styles.continueText}>Continue</Text>
+      </TouchableOpacity>
+
+    </View>
+
+  </View>
+</Modal>
     </SafeAreaView>
   );
 };
@@ -478,5 +549,70 @@ addressText: {
 changeText: {
   color: "#FF8C00",
   fontWeight: "700"
+},
+modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.4)",
+  justifyContent: "flex-end"
+},
+
+paymentSheet: {
+  backgroundColor: "#fff",
+  padding: 20,
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20
+},
+
+sheetTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  marginBottom: 15,
+  textAlign: "center"
+},
+
+paymentOption: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  padding: 15,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: "#ddd",
+  marginBottom: 10
+},
+
+activeOption: {
+  borderColor: "#FF8C00",
+  backgroundColor: "#FFF3E0"
+},
+
+optionText: {
+  fontSize: 16,
+  fontWeight: "600"
+},
+
+optionAmount: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#FF8C00"
+},
+
+continueBtn: {
+  backgroundColor: "#FF8C00",
+  padding: 14,
+  borderRadius: 12,
+  alignItems: "center",
+  marginTop: 10
+},
+
+continueText: {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "700"
+},
+sheetHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 15
 },
 });
