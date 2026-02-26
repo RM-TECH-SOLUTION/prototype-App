@@ -3,6 +3,7 @@ import { View, Image, StyleSheet, Animated, Dimensions } from "react-native";
 import splashScreenImage from "../assets/bgHome1.png";
 import logoImage from "../assets/AR-Fashion.png"; 
 import useCmsStore from '../store/useCmsStore';
+import useSessionStore from "../store/useSessionStore";
 
 const { width, height } = Dimensions.get("window");
  const LOGO_SIZE = 200;
@@ -12,6 +13,8 @@ const SplashScreen = ({ navigation }) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const { getCmsData ,cmsData} = useCmsStore();
   const [splashCmsData, setSplashCmsData] = useState([]);
+  const { user} = useSessionStore();
+
 
   useEffect(()=>{
     getCmsData()
@@ -51,7 +54,12 @@ useEffect(() => {
 
     // Navigate after delay
     const timeout = setTimeout(() => {
-      navigation.replace("Walkthrough"); 
+      if (user) {
+        navigation.replace("Home"); 
+      }
+      else{
+         navigation.replace("Walkthrough"); 
+      }
     }, 3000);
 
     return () => clearTimeout(timeout);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,14 +14,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 
-const AddAddressComponent = ({ onSave }) => {
-
-  /* ---------------- STATES ---------------- */
+const AddAddressComponent = ({ onSave, getProfile }) => {
 
   const [showModal, setShowModal] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
-  // ✅ Serviceable pincodes
   const SERVICEABLE_PINCODES = [
     "502032",
     "500002",
@@ -29,12 +26,14 @@ const AddAddressComponent = ({ onSave }) => {
     "500004"
   ];
 
+  /* ✅ Added state field */
   const [address, setAddress] = useState({
     building: "",
     doorNo: "",
     street: "",
     landmark: "",
     city: "",
+    state: "",
     pincode: ""
   });
 
@@ -47,7 +46,6 @@ const AddAddressComponent = ({ onSave }) => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         alert("Location permission denied");
-        setLoadingLocation(false);
         return;
       }
 
@@ -69,11 +67,11 @@ const AddAddressComponent = ({ onSave }) => {
           street: loc.street || "",
           landmark: "",
           city: loc.city || loc.subregion || "",
+          state: loc.region || "",   // ✅ auto fill state
           pincode: loc.postalCode || ""
         });
       }
     } catch (error) {
-      console.log(error);
       alert("Unable to fetch location");
     } finally {
       setLoadingLocation(false);
@@ -88,6 +86,7 @@ const AddAddressComponent = ({ onSave }) => {
       !address.doorNo ||
       !address.street ||
       !address.city ||
+      !address.state ||
       !address.pincode
     ) {
       alert("Please fill all required fields");
@@ -101,14 +100,22 @@ const AddAddressComponent = ({ onSave }) => {
 
     onSave(address);
     setShowModal(false);
-  };
 
-  /* ---------------- UI ---------------- */
+    // reset form
+    setAddress({
+      building: "",
+      doorNo: "",
+      street: "",
+      landmark: "",
+      city: "",
+      state: "",
+      pincode: ""
+    });
+  };
 
   return (
     <View>
 
-      {/* OPEN BUTTON */}
       <TouchableOpacity
         style={styles.addBtn}
         onPress={() => setShowModal(true)}
@@ -116,28 +123,29 @@ const AddAddressComponent = ({ onSave }) => {
         <Text style={styles.addText}>+ Add Delivery Address</Text>
       </TouchableOpacity>
 
-      {/* MODAL */}
       <Modal visible={showModal} animationType="slide" transparent>
         <View style={styles.overlay}>
-
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-
             <View style={styles.modalContainer}>
-
               <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
 
                 {/* HEADER */}
                 <View style={styles.header}>
                   <Text style={styles.heading}>Delivery Address</Text>
 
-                  <TouchableOpacity onPress={() => setShowModal(false)}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowModal(false);
+                      getProfile && getProfile();
+                    }}
+                  >
                     <Ionicons name="close" size={22} color="#333" />
                   </TouchableOpacity>
                 </View>
 
-                {/* LIVE LOCATION BUTTON */}
+                {/* LIVE LOCATION */}
                 <TouchableOpacity
                   style={styles.locationBtn}
                   onPress={getLiveLocation}
@@ -205,6 +213,16 @@ const AddAddressComponent = ({ onSave }) => {
                   }
                 />
 
+                {/* ✅ NEW STATE FIELD */}
+                <TextInput
+                  placeholder="State"
+                  style={styles.input}
+                  value={address.state}
+                  onChangeText={(text) =>
+                    setAddress({ ...address, state: text })
+                  }
+                />
+
                 <TextInput
                   placeholder="Pincode"
                   style={styles.input}
@@ -224,11 +242,8 @@ const AddAddressComponent = ({ onSave }) => {
                 </TouchableOpacity>
 
               </ScrollView>
-
             </View>
-
           </KeyboardAvoidingView>
-
         </View>
       </Modal>
 

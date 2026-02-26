@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import HomeTabs from "../component/HomeTabs";
 import useCmsStore from "../store/useCmsStore";
+import useAuthStore from "../store/useAuthStore";
 
 /* 🔹 CMS NORMALIZER */
 const normalizeCmsFields = (cms) => {
@@ -28,6 +29,7 @@ const normalizeCmsFields = (cms) => {
 
 const HomeContainer = () => {
   const { cmsData, getCmsData } = useCmsStore();
+   const {getProfile} = useAuthStore()
 
   const [homeBanner, setHomeBanner] = useState(null);
   const [homeScreenSlider, setHomeScreenSlider] = useState([]);
@@ -37,6 +39,8 @@ const HomeContainer = () => {
   /* FETCH CMS */
   useEffect(() => {
     getCmsData();
+    getProfile()
+
   }, []);
 
   /* PROCESS CMS */

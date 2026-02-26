@@ -38,11 +38,16 @@ const CheckoutComponent = ({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 const [paymentMethod, setPaymentMethod] = useState(null);
 
+
   useEffect(() => {
   if (profile?.address) {
     setSelectedAddress(profile.address);
   }
 }, [profile]);
+
+useEffect(()=>{
+getProfile()
+},[])
 
 
   console.log(profile,"useruser selectedAddress",);
@@ -60,103 +65,136 @@ const [paymentMethod, setPaymentMethod] = useState(null);
 
   /* ================= PAYMENT ================= */
 
-  const payNow = async () => {
-    try {
-      setLoading(true);
-      console.log("➡ Creating order...");
+const createOrder = async (orderType) => {
+  try {
+    setLoading(true);
 
-     const res = await fetch(
-  "https://api.rmtechsolution.com/create_order.php",
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      amount: Number(total),               
-      merchant_id: merchantData?.merchantId,
-
-      // 🔑 Razorpay Keys
-      keyId: merchantData?.keyId,
-      keySecret: merchantData?.keySecret,
-
-      // 👤 User
-      user_id: user?.id,
-      phone: user?.phone?.startsWith("+91")
-        ? user.phone
-        : `+91${user?.phone}`,
-
-      // 🛒 Order
-      items: cartItems,
-      orderType: "online",
-      discount: 0,
-
-      // ✅ Prefill (also send to backend if needed later)
-      prefill: {
-        contact: user?.phone?.startsWith("+91")
-          ? user.phone
-          : `+91${user?.phone}`,
-        name: user?.name || "Customer",
-        email: user?.email || "customer@test.com"
+    const res = await fetch(
+      "https://api.rmtechsolution.com/create_order.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: Number(total),
+          merchant_id: merchantData?.merchantId,
+          keyId: merchantData?.keyId,
+          keySecret: merchantData?.keySecret,
+          user_id: user?.id,
+          phone: user?.phone,
+          items: cartItems,
+          orderType: orderType,
+          discount: 0,
+          address: JSON.stringify(selectedAddress)
+        })
       }
-    })
-  }
-);
+    );
 
+    const order = await res.json();
 
-      const raw = await res.text();
-      console.log("🟡 RAW:", raw);
+    if (!order.success) {
+      Alert.alert("Order Error", order.message);
+      return;
+    }
 
-      const order = JSON.parse(raw);
+    /* ================= ONLINE ================= */
 
-      if (!order.success) {
-        Alert.alert("Order Error", order.message);
-        return;
-      }
+    if (orderType === "online") {
 
-     const options = {
-  key: order.key,
-  order_id: order.id,
-  amount: order.amount,
-  currency: order.currency,
-  keyId: merchantData?.keyId,
-  keySecret: merchantData?.keySecret,
-  merchant_id: merchantData?.merchantId,
+      const orderId = order.id; // 🔥 Save order id
 
-  name: merchantData?.name || "RM Tech Solution",
-  description: "Order Payment",
-
-  // ✅ ALWAYS PREFILL
-  prefill: {
-    contact: user?.phone?.startsWith("+91")
-      ? user.phone
-      : `+91${user?.phone}`,
-    name: user?.name || "Customer",
-    email: user?.email || "customer@test.com"
-  },
-
-  remember_customer: true,   // 👈 important
-
-  theme: { color: "#FF8C00" }
-};
-
+      const options = {
+        key: order.key,
+        order_id: orderId,
+        amount: order.amount,
+        currency: order.currency,
+        name: merchantData?.name || "RM Tech Solution",
+        description: "Order Payment",
+        prefill: {
+          contact: user?.phone,
+          name: user?.name,
+          email: user?.email
+        },
+        theme: { color: "#FF8C00" }
+      };
 
       RazorpayCheckout.open(options)
-        .then(() => {
-          clearCart()
-          Alert.alert("Success", "Payment successful");
+        .then(async (data) => {
+
+          console.log("Payment Success:", data);
+
+          // ✅ SEND SUCCESS TO BACKEND
+          await fetch(
+            "https://api.rmtechsolution.com/create_order.php",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                order_id: orderId,
+                payment_id: data.razorpay_payment_id,
+                merchant_id: merchantData?.merchantId,
+                user_id: user?.id,
+                phone: user?.phone,
+                items: cartItems,
+                address: JSON.stringify(selectedAddress),
+                amount: Number(total),
+                orderType: "online",
+                discount: 0,
+                status: "success"
+              })
+            }
+          );
+
+          clearCart();
           getCart();
+          Alert.alert("Success", "Payment successful");
           navigation.navigate("Home");
         })
-        .catch(() => {
+
+        .catch(async (error) => {
+
+          console.log("Payment Failed:", error);
+
+          // ✅ SEND FAILURE TO BACKEND
+          await fetch(
+            "https://api.rmtechsolution.com/create_order.php",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                order_id: orderId,
+                merchant_id: merchantData?.merchantId,
+                user_id: user?.id,
+                phone: user?.phone,
+                items: cartItems,
+                address: JSON.stringify(selectedAddress),
+                amount: Number(total),
+                orderType: "online",
+                discount: 0,
+                status: "failure"
+              })
+            }
+          );
+
           Alert.alert("Payment Cancelled");
         });
-
-    } catch (e) {
-      console.log("PAY ERROR:", e);
-      Alert.alert("Error", "Something went wrong");
-    } finally {
-      setLoading(false);
     }
-  };
+
+    /* ================= COD ================= */
+
+    if (orderType === "COD") {
+      Alert.alert("Order Placed", "Cash on Delivery selected");
+      clearCart();
+      getCart();
+      navigation.navigate("Home");
+    }
+
+  } catch (e) {
+    console.log("ORDER ERROR:", e);
+    Alert.alert("Error", "Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   const handleIncrease = async (item) => {
@@ -303,7 +341,7 @@ const renderItem = ({ item }) => {
     ) : null}
 
     <Text style={styles.addressText}>
-      {selectedAddress.city} - {selectedAddress.pincode}
+      {selectedAddress.city} - {selectedAddress.pincode} - {selectedAddress.state}
     </Text>
     <Text style={styles.addressText}>
       {profile.phone}
@@ -320,6 +358,7 @@ const renderItem = ({ item }) => {
       Alert.alert("Address Saved");
       getProfile()
     }}
+    getProfile={getProfile}
   />
 
 )}
@@ -371,9 +410,9 @@ const renderItem = ({ item }) => {
       <TouchableOpacity
         style={[
           styles.paymentOption,
-          paymentMethod === "cod" && styles.activeOption
+          paymentMethod === "COD" && styles.activeOption
         ]}
-        onPress={() => setPaymentMethod("cod")}
+        onPress={() => setPaymentMethod("COD")}
       >
         <Text style={styles.optionText}>Cash on Delivery</Text>
         <Text style={styles.optionAmount}>₹{total}</Text>
@@ -389,13 +428,10 @@ const renderItem = ({ item }) => {
         onPress={() => {
           setShowPaymentModal(false);
 
-          if (paymentMethod === "online") {
-            payNow();
-          } else {
-            Alert.alert("Order Placed", "Cash on Delivery selected");
-            clearCart();
-            getCart();
-            navigation.navigate("Home");
+         if (paymentMethod === "online") {
+            createOrder("online");
+            } else {
+                createOrder("COD");   // ✅ Now COD also calls backend
           }
         }}
       >

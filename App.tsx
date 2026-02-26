@@ -10,6 +10,7 @@ import LoginContainer from './container/LoginContainer'
 import RegisterContainer from './container/RegisterContainer';
 import HomeContainer from './container/HomeContainer';
 import CheckoutContainer from './container/CheckoutContainer'
+import SavedAddressComponent from './component/SavedAddressComponent'
 
 const Stack = createStackNavigator();
 
@@ -24,6 +25,11 @@ export default function App() {
         <Stack.Screen name="Register" component={RegisterContainer} />
         <Stack.Screen name="Home" component={HomeContainer} />
         <Stack.Screen name="Checkout" component={CheckoutContainer}/>
+       <Stack.Screen
+          name="SavedAddressComponent"
+          component={SavedAddressComponent}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
