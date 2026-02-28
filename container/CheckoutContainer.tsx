@@ -1,8 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect ,useState} from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CheckoutComponent from "../component/CheckoutComponent";
 import orderingStore from "../store/orderingStore";
 import useAuthStore from "../store/useAuthStore";
+import useCmsStore from "../store/useCmsStore";
 
 const CheckoutContainer = ({ navigation }) => {
   const {
@@ -16,13 +17,51 @@ const CheckoutContainer = ({ navigation }) => {
     clearCart
   } = orderingStore();
   const {saveUserAddress,getProfile,profile} = useAuthStore()
+  const { cmsData } = useCmsStore();
+const [checkoutUi, setCheckoutUi] = useState({});
+const [addressUiConfig, setAddressUiConfig] = useState({});
 
   useEffect(() => {
     getCart();
     getMerchant()
-    getProfile()
+    // getProfile()
   }, []);
-  console.log(merchantData,"merchantData");
+  // console.log(merchantData,"merchantData");
+
+  useEffect(() => {
+  if (!Array.isArray(cmsData)) return;
+
+  const config = cmsData.find(
+    (item) => item.modelSlug === "checkoutPageConfiguration"
+  );
+
+  if (!config?.cms) return;
+
+  const formatted = Object.values(config.cms).reduce((acc, field) => {
+    acc[field.fieldKey] = field.fieldValue;
+    return acc;
+  }, {});
+
+  setCheckoutUi(formatted);
+}, [cmsData]);
+
+useEffect(() => {
+  if (!Array.isArray(cmsData)) return;
+
+  const config = cmsData.find(
+    (item) => item.modelSlug === "addressPageConfiguration"
+  );
+
+  if (!config?.cms) return;
+
+  const formatted = Object.values(config.cms).reduce((acc, field) => {
+    acc[field.fieldKey] = field.fieldValue;
+    return acc;
+  }, {});
+
+  setAddressUiConfig(formatted);
+
+}, [cmsData]);
   
 
   return (
@@ -39,6 +78,8 @@ const CheckoutContainer = ({ navigation }) => {
         saveUserAddress={saveUserAddress}
         profile={profile}
         getProfile={getProfile}
+        uiConfig={checkoutUi}
+        addressUiConfig={addressUiConfig}
       />
     </SafeAreaView>
   );

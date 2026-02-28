@@ -31,7 +31,7 @@ const orderingStore = create((set, get) => ({
         apiClient.Urls.getCatalogueModels
       );
 
-      console.log("📦 getCatalogModels →", res);
+      // console.log("📦 getCatalogModels →", res);
 
       if (res?.success) {
         set({ catalogModels: res.data || [] });
@@ -67,7 +67,7 @@ const orderingStore = create((set, get) => ({
         { catalogueModelId }
       );
 
-      console.log("🧾 getCatalogItems →", res);
+      // console.log("🧾 getCatalogItems →", res);
 
       if (res?.success) {
         set({ catalogItems: res.data || [] });
@@ -96,7 +96,7 @@ const orderingStore = create((set, get) => ({
     try {
       const res = await apiClient.get(apiClient.Urls.getCart);
 
-      console.log("🛒 getCart →", res);
+      // console.log("🛒 getCart →", res);
 
       if (res?.success) {
         set({ cartItems: res.cart || [] });
@@ -121,7 +121,7 @@ const orderingStore = create((set, get) => ({
     try {
       const res = await apiClient.get(apiClient.Urls.getMerchant);
 
-      console.log(res,"resresjjgj");
+      // console.log(res,"resresjjgj");
       
 
       if (res?.success) {
@@ -154,7 +154,7 @@ const orderingStore = create((set, get) => ({
         { item_id, item_name, price, quantity }
       );
 
-      console.log("➕ addToCart →", res);
+      // console.log("➕ addToCart →", res);
 
       if (res?.success) {
         get().getCart();
@@ -183,7 +183,7 @@ const orderingStore = create((set, get) => ({
         { cart_id, type }
       );
 
-      console.log("🔁 updateQty →", res);
+      // console.log("🔁 updateQty →", res);
 
       if (res?.success) {
         get().getCart();
@@ -212,7 +212,7 @@ const orderingStore = create((set, get) => ({
         { cart_id }
       );
 
-      console.log("🗑 deleteCartItem →", res);
+      // console.log("🗑 deleteCartItem →", res);
 
       if (res?.success) {
         get().getCart();

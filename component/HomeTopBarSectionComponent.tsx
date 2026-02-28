@@ -7,7 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 
 const HomeTopBarSectionComponent = () => {
    const { cartResponse } = orderingStore();
-   console.log(cartResponse?.length,"cartResponsejjjj");
+
    const navigation = useNavigation();
    
   return (

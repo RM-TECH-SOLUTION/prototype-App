@@ -10,7 +10,7 @@ const BASE_URL = rmtech?.baseUrl?.endsWith("/")
   : rmtech.baseUrl + "/";
 
 // Always number
-const merchantId = Number(rmtech?.merchantId || 0);
+const merchantId = Number(9);
 
 /* ================== API URLS ================= */
 
@@ -74,12 +74,12 @@ const apiClient = {
 
     const reqUrl = url + queryString;
 
-    console.log(reqUrl,"reqUrl");
+    // console.log(reqUrl,"reqUrl");
     
 
     try {
-      console.log(`🚀 [${method}] Request → ${reqUrl}`);
-      console.log("🧾 PARAMS:", finalParams);
+      // console.log(`🚀 [${method}] Request → ${reqUrl}`);
+      // console.log("🧾 PARAMS:", finalParams);
 
       const response = await fetch(reqUrl, {
         method,
@@ -99,7 +99,7 @@ const apiClient = {
         throw new Error("Invalid JSON response");
       }
 
-      console.log("📡 Response →", data);
+      // console.log("📡 Response →", data);
       return data;
 
     } catch (error) {

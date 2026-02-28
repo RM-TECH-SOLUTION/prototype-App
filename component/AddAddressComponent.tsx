@@ -14,19 +14,22 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 
-const AddAddressComponent = ({ onSave, getProfile }) => {
+const AddAddressComponent = ({
+  onSave,
+  getProfile,
+  uiConfig = {}
+}) => {
+
+  const styles = createStyles(uiConfig);
 
   const [showModal, setShowModal] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
-  const SERVICEABLE_PINCODES = [
-    "502032",
-    "500002",
-    "500003",
-    "500004"
-  ];
+  const SERVICEABLE_PINCODES =
+    uiConfig?.serviceablePincodes
+      ? uiConfig.serviceablePincodes.split(",").map(p => p.trim())
+      : [];
 
-  /* ✅ Added state field */
   const [address, setAddress] = useState({
     building: "",
     doorNo: "",
@@ -37,7 +40,7 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
     pincode: ""
   });
 
-  /* ---------------- LIVE LOCATION ---------------- */
+  /* ================= LIVE LOCATION ================= */
 
   const getLiveLocation = async () => {
     try {
@@ -67,18 +70,18 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
           street: loc.street || "",
           landmark: "",
           city: loc.city || loc.subregion || "",
-          state: loc.region || "",   // ✅ auto fill state
+          state: loc.region || "",
           pincode: loc.postalCode || ""
         });
       }
-    } catch (error) {
+    } catch {
       alert("Unable to fetch location");
     } finally {
       setLoadingLocation(false);
     }
   };
 
-  /* ---------------- SAVE ---------------- */
+  /* ================= SAVE ================= */
 
   const handleSave = () => {
     if (
@@ -93,24 +96,16 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
       return;
     }
 
-    if (!SERVICEABLE_PINCODES.includes(address.pincode)) {
+    if (
+      SERVICEABLE_PINCODES.length &&
+      !SERVICEABLE_PINCODES.includes(address.pincode)
+    ) {
       alert("Service not available in this area");
       return;
     }
 
     onSave(address);
     setShowModal(false);
-
-    // reset form
-    setAddress({
-      building: "",
-      doorNo: "",
-      street: "",
-      landmark: "",
-      city: "",
-      state: "",
-      pincode: ""
-    });
   };
 
   return (
@@ -120,7 +115,9 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
         style={styles.addBtn}
         onPress={() => setShowModal(true)}
       >
-        <Text style={styles.addText}>+ Add Delivery Address</Text>
+        <Text style={styles.addText}>
+          {uiConfig?.addAddressText || "+ Add Delivery Address"}
+        </Text>
       </TouchableOpacity>
 
       <Modal visible={showModal} animationType="slide" transparent>
@@ -129,19 +126,16 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             <View style={styles.modalContainer}>
-              <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+              <ScrollView>
 
                 {/* HEADER */}
                 <View style={styles.header}>
-                  <Text style={styles.heading}>Delivery Address</Text>
+                  <Text style={styles.heading}>
+                    Delivery Address
+                  </Text>
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowModal(false);
-                      getProfile && getProfile();
-                    }}
-                  >
-                    <Ionicons name="close" size={22} color="#333" />
+                  <TouchableOpacity onPress={() => setShowModal(false)}>
+                    <Ionicons name="close" size={22} color={uiConfig?.headerTextColor || uiConfig?.headingColor || "#000"} />
                   </TouchableOpacity>
                 </View>
 
@@ -151,13 +145,13 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
                   onPress={getLiveLocation}
                 >
                   {loadingLocation ? (
-                    <ActivityIndicator color="#FF8C00" />
+                    <ActivityIndicator color={uiConfig?.primaryColor || "#E50914"} />
                   ) : (
                     <>
                       <Ionicons
                         name="location-outline"
                         size={18}
-                        color="#FF8C00"
+                        color={uiConfig?.primaryColor || "#E50914"}
                       />
                       <Text style={styles.locationText}>
                         Use Live Location
@@ -166,79 +160,25 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
                   )}
                 </TouchableOpacity>
 
-                {/* INPUTS */}
+                {Object.keys(address).map((key) => (
+                  <TextInput
+                    key={key}
+                    placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
+                    style={styles.input}
+                    value={address[key]}
+                    onChangeText={(text) =>
+                      setAddress({ ...address, [key]: text })
+                    }
+                  />
+                ))}
 
-                <TextInput
-                  placeholder="Building / Apartment Name"
-                  style={styles.input}
-                  value={address.building}
-                  onChangeText={(text) =>
-                    setAddress({ ...address, building: text })
-                  }
-                />
-
-                <TextInput
-                  placeholder="Door No"
-                  style={styles.input}
-                  value={address.doorNo}
-                  onChangeText={(text) =>
-                    setAddress({ ...address, doorNo: text })
-                  }
-                />
-
-                <TextInput
-                  placeholder="Street"
-                  style={styles.input}
-                  value={address.street}
-                  onChangeText={(text) =>
-                    setAddress({ ...address, street: text })
-                  }
-                />
-
-                <TextInput
-                  placeholder="Landmark (Optional)"
-                  style={styles.input}
-                  value={address.landmark}
-                  onChangeText={(text) =>
-                    setAddress({ ...address, landmark: text })
-                  }
-                />
-
-                <TextInput
-                  placeholder="City"
-                  style={styles.input}
-                  value={address.city}
-                  onChangeText={(text) =>
-                    setAddress({ ...address, city: text })
-                  }
-                />
-
-                {/* ✅ NEW STATE FIELD */}
-                <TextInput
-                  placeholder="State"
-                  style={styles.input}
-                  value={address.state}
-                  onChangeText={(text) =>
-                    setAddress({ ...address, state: text })
-                  }
-                />
-
-                <TextInput
-                  placeholder="Pincode"
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={address.pincode}
-                  onChangeText={(text) =>
-                    setAddress({ ...address, pincode: text })
-                  }
-                />
-
-                {/* SAVE BUTTON */}
                 <TouchableOpacity
                   style={styles.saveBtn}
                   onPress={handleSave}
                 >
-                  <Text style={styles.saveText}>Save Address</Text>
+                  <Text style={styles.saveText}>
+                    {uiConfig?.saveButtonText || "Save Address"}
+                  </Text>
                 </TouchableOpacity>
 
               </ScrollView>
@@ -253,88 +193,95 @@ const AddAddressComponent = ({ onSave, getProfile }) => {
 
 export default AddAddressComponent;
 
-/* ================= STYLES ================= */
+/* =========================================================
+   DYNAMIC STYLES
+========================================================= */
 
-const styles = StyleSheet.create({
+const createStyles = (ui) =>
+  StyleSheet.create({
 
-  addBtn: {
-    margin: 12,
-    padding: 14,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#FF8C00",
-    alignItems: "center"
-  },
+    addBtn: {
+      margin: 16,
+      padding: 16,
+      backgroundColor: ui?.pageBgColor || "#1A1A1A",
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: ui?.primaryColor || "#E50914",
+      alignItems: "center"
+    },
 
-  addText: {
-    color: "#FF8C00",
-    fontSize: 15,
-    fontWeight: "700"
-  },
+    addText: {
+      color: ui?.primaryColor || "#E50914",
+      fontSize: 15,
+      fontWeight: "800"
+    },
 
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center"
-  },
+    overlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      justifyContent: "center"
+    },
 
-  modalContainer: {
-    backgroundColor: "#fff",
-    margin: 20,
-    borderRadius: 12,
-    padding: 15,
-    maxHeight: "85%"
-  },
+    modalContainer: {
+      backgroundColor: ui?.modalBgColor || "#111",
+      margin: 20,
+      borderRadius: 20,
+      padding: 20,
+      maxHeight: "90%"
+    },
 
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10
-  },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16
+    },
 
-  heading: {
-    fontSize: 16,
-    fontWeight: "700"
-  },
+    heading: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: ui?.headingColor || "#fff"
+    },
 
-  locationBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#FF8C00",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12
-  },
+    locationBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: ui?.locationBorderColor || ui?.primaryColor || "#E50914",
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 14
+    },
 
-  locationText: {
-    color: "#FF8C00",
-    fontWeight: "700",
-    marginLeft: 6
-  },
+    locationText: {
+      color: ui?.primaryColor || "#E50914",
+      fontWeight: "700",
+      marginLeft: 8
+    },
 
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10
-  },
+    input: {
+      backgroundColor: ui?.inputBgColor || "#1A1A1A",
+      borderWidth: 1,
+      borderColor: ui?.inputBorderColor || "#333",
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 12,
+      color: ui?.inputTextColor || "#fff",
+      placeholderTextColor: ui?.headerTextColor || "#555"
+    },
 
-  saveBtn: {
-    backgroundColor: "#FF8C00",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 10
-  },
+    saveBtn: {
+      backgroundColor: ui?.buttonBgColor || ui?.primaryColor || "#E50914",
+      padding: 16,
+      borderRadius: 14,
+      alignItems: "center",
+      marginTop: 10
+    },
 
-  saveText: {
-    color: "#fff",
-    fontWeight: "700"
-  }
+    saveText: {
+      color: ui?.buttonTextColor || "#fff",
+      fontWeight: "800"
+    }
 
-});
+  });

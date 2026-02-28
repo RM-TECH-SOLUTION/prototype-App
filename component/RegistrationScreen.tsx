@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,41 +6,66 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Platform,
   Alert,
   Image,
   Modal,
+  Dimensions,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import logoImage from "../assets/AR-Fashion.png";
+import useCmsStore from "../store/useCmsStore";
 
-export default function RegistrationScreen({ onLogin, registerUser }) {
+const { width, height } = Dimensions.get("window");
 
+export default function RegistrationScreen({
+  onLogin,
+  registerUser,
+}) {
+  const { cmsData } = useCmsStore();
+
+  const [cmsConfig, setCmsConfig] = useState({});
+  // console.log("Registration CMS Config:", cmsConfig);
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [gender, setGender] = useState("Select Your Gender");
-  const [showGenderModal, setShowGenderModal] = useState(false);
+  const [gender, setGender] = useState("Select Gender");
+  const [showGenderModal, setShowGenderModal] =
+    useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  /* ================= GET CMS ================= */
+
+  useEffect(() => {
+    const registerConfig = cmsData?.find(
+      (item) => item.modelSlug === "registerConfiguration"
+    );
+
+    if (!registerConfig?.cms) return;
+
+    const formatted = Object.keys(
+      registerConfig.cms
+    ).reduce((acc, key) => {
+      acc[key] =
+        registerConfig.cms[key]?.fieldValue;
+      return acc;
+    }, {});
+
+    setCmsConfig(formatted);
+  }, [cmsData]);
 
   /* ================= VALIDATION ================= */
 
   function validate() {
     const e = {};
 
-    if (!name.trim()) e.name = "Name is required";
-    if (!phone.trim()) e.phone = "Phone is required";
-    else if (!/^\d{7,15}$/.test(phone.trim()))
-      e.phone = "Enter valid phone (7–15 digits)";
-
-    if (!email.trim()) e.email = "Email is required";
-    else if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email.trim()))
-      e.email = "Enter valid email";
-
-    if (!password.trim()) e.password = "Password is required";
+    if (!name.trim()) e.name = "Name required";
+    if (!phone.trim())
+      e.phone = "Phone required";
+    if (!email.trim())
+      e.email = "Email required";
+    if (!password.trim())
+      e.password = "Password required";
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -60,15 +85,10 @@ export default function RegistrationScreen({ onLogin, registerUser }) {
         password
       );
 
-      Alert.alert("Success", "Registered successfully");
-
-      setPassword("");
-      setName("");
-      setPhone("");
-      setEmail("");
-      setGender("Select Your Gender");
-      setErrors({});
-
+      Alert.alert(
+        "Success",
+        "Account created successfully"
+      );
       onLogin && onLogin();
     } catch (error) {
       Alert.alert("Error", "Registration failed");
@@ -77,226 +97,305 @@ export default function RegistrationScreen({ onLogin, registerUser }) {
     }
   }
 
-  /* ================= UI ================= */
-
   return (
-    <LinearGradient
-      colors={["#E65100", "#FFB74D"]}
-      style={styles.gradientContainer}
-    >
+    <View style={{ flex: 1 }}>
+      {/* Background */}
+      <Image
+        source={
+          cmsConfig?.backgroundImage
+            ? { uri: cmsConfig.backgroundImage }
+            : require("../assets/bgHome1.png")
+        }
+        style={styles.background}
+      />
+
+      <View style={styles.overlay} />
+
       <KeyboardAwareScrollView
-        enableOnAndroid
-        extraScrollHeight={120}
-        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.innerContainer}>
-
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor:
+                cmsConfig?.cardBackgroundColor ||
+                "rgba(0,0,0,0.8)",
+            },
+          ]}
+        >
           {/* Logo */}
-          <Image source={logoImage} style={styles.logo} />
+          <Image
+            source={
+              cmsConfig?.logoImage
+                ? { uri: cmsConfig.logoImage }
+                : require("../assets/AR-Fashion.png")
+            }
+            style={styles.logo}
+          />
 
-          <Text style={styles.title}>Register New User</Text>
+          <Text style={styles.title}>
+            {cmsConfig?.title ||
+              "Create Account"}
+          </Text>
 
-          {/* Name */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={[styles.input, errors.name && styles.inputError]}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter Your Name"
-            />
-            {errors.name && <Text style={styles.errText}>{errors.name}</Text>}
-          </View>
+          <Text style={styles.subtitle}>
+            {cmsConfig?.subtitle ||
+              "Join us today"}
+          </Text>
 
-          {/* Phone */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Phone</Text>
-            <TextInput
-              style={[styles.input, errors.phone && styles.inputError]}
-              value={phone}
-              keyboardType="phone-pad"
-              onChangeText={(t) => setPhone(t.replace(/\s+/g, ""))}
-              placeholder="Enter Your Phone"
-            />
-            {errors.phone && <Text style={styles.errText}>{errors.phone}</Text>}
-          </View>
-
-          {/* Email */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              placeholder="Enter Your Email"
-            />
-            {errors.email && <Text style={styles.errText}>{errors.email}</Text>}
-          </View>
-
-          {/* Password */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={[styles.input, errors.password && styles.inputError]}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="Create Password"
-            />
-            {errors.password && (
-              <Text style={styles.errText}>{errors.password}</Text>
-            )}
-          </View>
+          {/* Inputs */}
+          {[
+            {
+              label: "Full Name",
+              value: name,
+              setter: setName,
+              key: "name",
+            },
+            {
+              label: "Phone",
+              value: phone,
+              setter: setPhone,
+              key: "phone",
+            },
+            {
+              label: "Email",
+              value: email,
+              setter: setEmail,
+              key: "email",
+            },
+            {
+              label: "Password",
+              value: password,
+              setter: setPassword,
+              key: "password",
+              secure: true,
+            },
+          ].map((field) => (
+            <View
+              key={field.key}
+              style={styles.field}
+            >
+              <TextInput
+                placeholder={field.label}
+                placeholderTextColor="#aaa"
+                secureTextEntry={
+                  field.secure
+                }
+                value={field.value}
+                onChangeText={
+                  field.setter
+                }
+                style={[
+                  styles.input,
+                  {
+                    borderColor:
+                      cmsConfig?.inputBorderColor ||
+                      "#E50914",
+                  },
+                  errors[field.key] &&
+                    styles.inputError,
+                ]}
+              />
+              {errors[field.key] && (
+                <Text style={styles.errText}>
+                  {errors[field.key]}
+                </Text>
+              )}
+            </View>
+          ))}
 
           {/* Gender */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Gender</Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowGenderModal(true)}
-            >
-              <Text>{gender}</Text>
-            </TouchableOpacity>
-          </View>
+          {cmsConfig?.genderEnabled && (
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.input,
+                  {
+                    borderColor:
+                      cmsConfig?.inputBorderColor ||
+                      "#E50914",
+                  },
+                ]}
+                onPress={() =>
+                  setShowGenderModal(true)
+                }
+              >
+                <Text style={{ color: "#fff" }}>
+                  {gender}
+                </Text>
+              </TouchableOpacity>
 
-          {/* Gender Modal */}
-          <Modal visible={showGenderModal} transparent animationType="slide">
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalBox}>
-                {["Male", "Female", "Other"].map((g) => (
-                  <TouchableOpacity
-                    key={g}
-                    style={styles.modalOption}
-                    onPress={() => {
-                      setGender(g);
-                      setShowGenderModal(false);
-                    }}
-                  >
-                    <Text>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </Modal>
+              <Modal
+                visible={showGenderModal}
+                transparent
+                animationType="fade"
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    {[
+                      "Male",
+                      "Female",
+                      "Other",
+                    ].map((g) => (
+                      <TouchableOpacity
+                        key={g}
+                        style={
+                          styles.modalOption
+                        }
+                        onPress={() => {
+                          setGender(g);
+                          setShowGenderModal(
+                            false
+                          );
+                        }}
+                      >
+                        <Text>{g}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </Modal>
+            </>
+          )}
 
-          {/* Submit */}
+          {/* Button */}
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              {
+                backgroundColor:
+                  cmsConfig?.buttonColor ||
+                  "#E50914",
+              },
+            ]}
             onPress={handleSubmit}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator
+                color={
+                  cmsConfig?.buttonTextColor ||
+                  "#fff"
+                }
+              />
             ) : (
-              <Text style={styles.buttonText}>Create Account</Text>
+              <Text
+                style={{
+                  color:
+                    cmsConfig?.buttonTextColor ||
+                    "#fff",
+                  fontWeight: "bold",
+                }}
+              >
+                Create Account
+              </Text>
             )}
           </TouchableOpacity>
 
-          {/* Footer */}
           <View style={styles.footer}>
-            <Text>Already Registered?</Text>
+            <Text style={{ color: "#ccc" }}>
+              Already have account?
+            </Text>
             <TouchableOpacity onPress={onLogin}>
-              <Text style={styles.loginText}> Login Now</Text>
+              <Text style={styles.loginText}>
+                {" "}
+                Login
+              </Text>
             </TouchableOpacity>
           </View>
-
         </View>
       </KeyboardAwareScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
-/* ================= STYLES ================= */
-
 const styles = StyleSheet.create({
-  gradientContainer: {
-    flex: 1,
+  background: {
+    position: "absolute",
+    width,
+    height,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.65)",
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  innerContainer: {
+  card: {
     width: "85%",
-    backgroundColor: "#fff",
-    borderRadius: 20,
     padding: 25,
-    alignItems: "center",
-    elevation: 8,
+    borderRadius: 25,
   },
   logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
+    width: 110,
+    height: 110,
+    alignSelf: "center",
+    marginBottom: 15,
   },
   title: {
     fontSize: 24,
-    fontWeight: "700",
-    color: "#FF8C00",
-    marginBottom: 15,
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  subtitle: {
+    color: "#ccc",
+    textAlign: "center",
+    marginBottom: 20,
   },
   field: {
     width: "100%",
-    marginBottom: 14,
-  },
-  label: {
-    marginBottom: 5,
-    fontWeight: "600",
+    marginBottom: 15,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 12,
+    padding: 12,
+    color: "#fff",
+    marginBottom: 10,
   },
   inputError: {
-    borderColor: "#e53935",
+    borderColor: "#ff4d4d",
   },
   errText: {
-    color: "#e53935",
-    marginTop: 4,
+    color: "#ff4d4d",
+    fontSize: 12,
   },
   button: {
-    backgroundColor: "#FF8C00",
-    width: "100%",
-    padding: 14,
-    borderRadius: 10,
+    paddingVertical: 15,
+    borderRadius: 30,
     alignItems: "center",
     marginTop: 10,
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
   footer: {
     flexDirection: "row",
+    justifyContent: "center",
     marginTop: 20,
   },
   loginText: {
-    color: "#007bff",
-    marginLeft: 5,
+    color: "#E50914",
+    fontWeight: "bold",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor:
+      "rgba(0,0,0,0.6)",
   },
   modalBox: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
     width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 20,
   },
   modalOption: {
-    paddingVertical: 12,
+    paddingVertical: 15,
     alignItems: "center",
   },
 });

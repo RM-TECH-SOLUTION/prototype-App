@@ -11,7 +11,7 @@ const WalkthroughContainer = ({ navigation }) => {
     if (!Array.isArray(cmsData)) return;
 
     const walkthroughItem = cmsData.find(
-      (item) => item.modelSlug === "walkthroughSlider"
+      (item) => item.modelSlug === "walkthroughSliders"
     );
 
     if (!walkthroughItem || !Array.isArray(walkthroughItem.cms)) return;
@@ -19,7 +19,10 @@ const WalkthroughContainer = ({ navigation }) => {
     const formattedData = walkthroughItem.cms.map((slide) => ({
       title: slide.title?.fieldValue || "",
       description: slide.discription?.fieldValue || "",
-      image: slide.image?.fieldValue || "",
+      image:
+      slide.walkthroughImage?.fieldValue ||
+      slide.walkthroughContantImage?.fieldValue ||
+      null,
     }));
 
     setWalkthroughData(formattedData);

@@ -12,11 +12,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 
 const { width } = Dimensions.get("window");
-const CARD_MARGIN = 10;
-const CARD_WIDTH = (width - 120) / 2;
 
-/* ================= IMAGE NORMALIZER ================= */
-
+/* IMAGE NORMALIZER */
 const getImageUri = (item) => {
   if (Array.isArray(item?.images) && item.images.length > 0)
     return item.images[0];
@@ -26,14 +23,11 @@ const getImageUri = (item) => {
   return null;
 };
 
-/* ======================================================
-   COMPONENT
-====================================================== */
-
 const CategoryListComponent = ({
+  uiConfig = {},
   CATEGORIES = [],
   ITEMS = [],
-  cartItems = [],     // 👈 from store
+  cartItems = [],
   onSelectCategory,
   loadingItems,
   addToCart,
@@ -41,55 +35,34 @@ const CategoryListComponent = ({
   deleteCartItem,
   getCart,
 }) => {
-
   const navigation = useNavigation();
-
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-
-  // { item_id : { quantity , cart_id } }
   const [cart, setCart] = useState({});
 
-  /* ======================================================
-     LOAD CART ON SCREEN OPEN
-  ====================================================== */
+  const gridColumns = uiConfig?.gridColumns || 2;
+  const CARD_WIDTH =
+    (width - 40 - (gridColumns - 1) * 12) / gridColumns;
 
   useEffect(() => {
     getCart && getCart();
   }, []);
 
-  /* ======================================================
-     MAP BACKEND CART → UI CART
-  ====================================================== */
-
   useEffect(() => {
     const map = {};
-
     cartItems.forEach((item) => {
       map[item.item_id] = {
         quantity: Number(item.quantity),
         cart_id: item.cart_id,
       };
     });
-
     setCart(map);
   }, [cartItems]);
 
-  console.log(cartItems,"cartItems");
-  
-
-  /* ======================================================
-     OPEN CATEGORY MODAL INITIALLY
-  ====================================================== */
-
   useEffect(() => {
-    const t = setTimeout(() => setModalVisible(true), 400);
+    const t = setTimeout(() => setModalVisible(true), 300);
     return () => clearTimeout(t);
   }, []);
-
-  /* ======================================================
-     HELPERS
-  ====================================================== */
 
   const getQty = (id) => cart[id]?.quantity || 0;
 
@@ -99,394 +72,348 @@ const CategoryListComponent = ({
     onSelectCategory(cat.id);
   };
 
-  /* ======================================================
-     CART TOTAL
-  ====================================================== */
-
- const { totalItems, totalPrice } = useMemo(() => {
-  let count = 0;
-  let price = 0;
-
-  cartItems.forEach((item) => {
-    count += Number(item.quantity || 0);
-    price += Number(item.total || 0);
-  });
-
-  return {
-    totalItems: count,
-    totalPrice: price.toFixed(2),
-  };
-}, [cartItems]);
-
-
-  /* ======================================================
-     CART ACTIONS
-  ====================================================== */
-
-  const handleAdd = async (item) => {
-    await addToCart({
-      item_id: item.id,
-      item_name: item.name,
-      price: item.price,
-      quantity: 1,
+  const { totalItems, totalPrice } = useMemo(() => {
+    let count = 0;
+    let price = 0;
+    cartItems.forEach((item) => {
+      count += Number(item.quantity || 0);
+      price += Number(item.total || 0);
     });
+    return {
+      totalItems: count,
+      totalPrice: price.toFixed(2),
+    };
+  }, [cartItems]);
 
-    await getCart();   // 🔥 refresh
-  };
+  const dynamicStyles = styles(uiConfig, CARD_WIDTH);
 
-  const handleIncrease = async (item) => {
-
-    console.log(item,"itemhjkhkhk");
-    
-    await updateQty(cart[item.id].cart_id, "inc");
-    await getCart();   // 🔥 refresh
-  };
-
-  const handleDecrease = async (item) => {
-    if (getQty(item.id) === 1) {
-      await deleteCartItem(cart[item.id].cart_id);
-    } else {
-      await updateQty(cart[item.id].cart_id, "dec");
-    }
-
-    await getCart();   // 🔥 refresh
-  };
-
-  /* ======================================================
-     CARD
-  ====================================================== */
-
-  const renderCard = (item, index, isItem = false, total = 0) => {
+  const renderCard = (item, isItem = false) => {
     const qty = getQty(item.id);
 
-    const isLastRow =
-      isItem && (index === total - 1 || index === total - 2);
-
     return (
-      <View style={{ margin:10 }}>
-        <View style={styles.card}>
-
+      <View style={dynamicStyles.card}>
+        {getImageUri(item) && (
           <Image
-            source={getImageUri(item) && { uri: getImageUri(item) }}
-            style={styles.image}
+            source={{ uri: getImageUri(item) }}
+            style={dynamicStyles.image}
           />
+        )}
 
-          <Text style={styles.cardText}>{item.name}</Text>
+        <Text style={dynamicStyles.cardText}>
+          {item.name}
+        </Text>
 
-          {isItem && (
-            <>
-              <Text style={styles.priceText}>₹{item.price}</Text>
+        {isItem && (
+          <>
+            <Text style={dynamicStyles.priceText}>
+              ₹{item.price}
+            </Text>
 
-              {qty === 0 ? (
+            {qty === 0 ? (
+              <TouchableOpacity
+                style={dynamicStyles.addButton}
+                onPress={() => addToCart({
+                  item_id: item.id,
+                  item_name: item.name,
+                  price: item.price,
+                  quantity: 1,
+                })}
+              >
+                <Text style={dynamicStyles.addButtonText}>
+                  ADD
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={dynamicStyles.qtyContainer}>
                 <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={() => handleAdd(item)}
+                  style={dynamicStyles.qtyButton}
+                  onPress={() =>
+                    qty === 1
+                      ? deleteCartItem(cart[item.id].cart_id)
+                      : updateQty(cart[item.id].cart_id, "dec")
+                  }
                 >
-                  <Text style={styles.addButtonText}>ADD</Text>
+                  <Text style={dynamicStyles.qtyText}>-</Text>
                 </TouchableOpacity>
-              ) : (
-                <View style={styles.qtyContainer}>
 
-                  <TouchableOpacity
-                    style={styles.qtyButton}
-                    onPress={() => handleDecrease(item)}
-                  >
-                    <Text style={styles.qtyText}>-</Text>
-                  </TouchableOpacity>
+                <Text style={dynamicStyles.qtyValue}>
+                  {qty}
+                </Text>
 
-                  <Text style={styles.qtyValue}>{qty}</Text>
-
-                  <TouchableOpacity
-                    style={styles.qtyButton}
-                    onPress={() => handleIncrease(item)}
-                  >
-                    <Text style={styles.qtyText}>+</Text>
-                  </TouchableOpacity>
-
-                </View>
-              )}
-            </>
-          )}
-
-        </View>
+                <TouchableOpacity
+                  style={dynamicStyles.qtyButton}
+                  onPress={() =>
+                    updateQty(cart[item.id].cart_id, "inc")
+                  }
+                >
+                  <Text style={dynamicStyles.qtyText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        )}
       </View>
     );
   };
 
-  /* ======================================================
-     UI
-  ====================================================== */
-
   return (
-    <View style={styles.container}>
-
-      <Text style={styles.headerTitle}>Catalog</Text>
+    <View style={dynamicStyles.container}>
+      <Text style={dynamicStyles.headerTitle}>
+        {uiConfig?.headerTitle || "Catalog"}
+      </Text>
 
       {!selectedCategory ? (
-        <Text style={styles.selectText}>Please select a catalog...</Text>
+        <Text style={dynamicStyles.selectText}>
+          Please select a catalog...
+        </Text>
       ) : (
         <>
-          <View style={styles.selectedBox}>
-            <Text style={styles.selectedLabel}>
-              Selected:
-              <Text style={styles.selectedValue}> {selectedCategory.name}</Text>
+          <View style={dynamicStyles.selectedBox}>
+            <Text style={dynamicStyles.selectedLabel}>
+              {selectedCategory.name}
             </Text>
 
-            <TouchableOpacity onPress={() => setModalVisible(true)}>
-              <Text style={styles.changeText}>Change</Text>
+            <TouchableOpacity
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={dynamicStyles.changeText}>
+                Change
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {loadingItems ? (
-            <Text style={styles.selectText}>Loading items...</Text>
-          ) : ITEMS.length === 0 ? (
-            <Text style={styles.selectText}>No items found.</Text>
-          ) : (
-            <FlatList
-              data={ITEMS}
-              keyExtractor={(i) => i.id.toString()}
-              numColumns={2}
-              renderItem={({ item, index }) =>
-                renderCard(item, index, true, ITEMS.length)
-              }
-              contentContainerStyle={styles.gridContainer}
-            />
-          )}
+          <FlatList
+            data={ITEMS}
+            keyExtractor={(i) => i.id.toString()}
+            numColumns={gridColumns}
+            renderItem={({ item }) =>
+              renderCard(item, true)
+            }
+            contentContainerStyle={{ paddingBottom: 120 }}
+          />
         </>
       )}
 
-      {totalItems > 0 && (
-        <View style={styles.cartContainer}>
-          <TouchableOpacity
-            style={styles.cartButton}
-            onPress={() => navigation.navigate("Checkout")}
-          >
-            <Text style={styles.cartText}>
-              View Cart ({totalItems}) - ₹{totalPrice}
+      {uiConfig?.enableFloatingCart &&
+        totalItems > 0 && (
+          <View style={dynamicStyles.cartContainer}>
+            <TouchableOpacity
+              style={dynamicStyles.cartButton}
+              onPress={() =>
+                navigation.navigate("Checkout")
+              }
+            >
+              <Text style={dynamicStyles.cartText}>
+                View Cart ({totalItems}) - ₹{totalPrice}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+      >
+        <View style={dynamicStyles.modalOverlay}>
+          <View style={dynamicStyles.modalBox}>
+            <Text style={dynamicStyles.modalTitle}>
+              Select Catalog
             </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* ================= CATEGORY MODAL ================= */}
-
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-
-            <Text style={styles.modalTitle}>Select a Catalog</Text>
 
             <FlatList
               data={CATEGORIES}
               keyExtractor={(i) => i.id.toString()}
-              numColumns={2}
+              numColumns={gridColumns}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  onPress={() => handleSelectCategoryLocal(item)}
+                  onPress={() =>
+                    handleSelectCategoryLocal(item)
+                  }
                 >
                   {renderCard(item)}
                 </TouchableOpacity>
               )}
             />
-
-            {/* <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeText}>Cancel</Text>
-            </TouchableOpacity> */}
-
           </View>
         </View>
       </Modal>
-
     </View>
   );
 };
 
 export default CategoryListComponent;
 
-/* ================= STYLES (UNCHANGED) ================= */
+/* ================= CMS BASED STYLES ================= */
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF8F0",
-    paddingHorizontal: 15,
-  },
+const styles = (ui, CARD_WIDTH) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor:
+        ui?.pageBgColor || "#0F0F0F",
+      paddingHorizontal: 16,
+    },
 
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#FF8C00",
-    marginVertical: 15,
-  },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: "800",
+      color:
+        ui?.headerTitleColor ||
+        ui?.primaryColor ||
+        "#E50914",
+      marginVertical: 20,
+    },
 
-  selectText: {
-    textAlign: "center",
-    color: "#999",
-    fontSize: 16,
-    marginTop: 80,
-  },
+    selectText: {
+      textAlign: "center",
+      color: "#888",
+      marginTop: 80,
+    },
 
-  selectedBox: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#FFF3E0",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 15,
-    borderWidth: 0.5,
-    borderColor: "rgba(0,0,0,0.3)",
-  },
+    selectedBox: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor:
+        ui?.cardBgColor || "#1A1A1A",
+      padding: 14,
+      borderRadius: 16,
+      marginBottom: 20,
+    },
 
-  selectedLabel: { fontSize: 16, color: "#333" },
-  selectedValue: { fontWeight: "700", color: "#FF8C00" },
-  changeText: { color: "#007bff", fontWeight: "600" },
+    selectedLabel: {
+      color: ui?.cardTextColor || "#fff",
+      fontWeight: "700",
+    },
 
-  gridContainer: {
-    alignItems: "center",
-    paddingBottom: 40,
-  },
+    changeText: {
+      color: ui?.primaryColor || "#E50914",
+    },
 
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    width: CARD_WIDTH,
-    height: 120,
-    justifyContent: "center",
-    alignItems: "center",
-    margin: CARD_MARGIN,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+    card: {
+      width: CARD_WIDTH,
+      backgroundColor:
+        ui?.cardBgColor || "#1A1A1A",
+      borderRadius: 20,
+      padding: 14,
+      margin: 6,
+    },
 
-  image: {
-    width: 70,
-    height: 70,
-    borderRadius: 12,
-    marginBottom: 6,
-  },
+    image: {
+      width: "100%",
+      height: 110,
+      borderRadius: 14,
+      marginBottom: 10,
+    },
 
-  cardText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-  },
+    cardText: {
+      color: ui?.cardTextColor || "#fff",
+      fontWeight: "700",
+    },
 
-  priceText: {
-    fontSize: 13,
-    color: "#666",
-  },
+    priceText: {
+      color: ui?.priceColor || "#aaa",
+      marginTop: 4,
+    },
 
-  addButton: {
-    backgroundColor: "#FF8C00",
-    paddingHorizontal: 22,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 6,
-  },
+    addButton: {
+      backgroundColor:
+        ui?.buttonColor || "#E50914",
+      paddingVertical: 8,
+      borderRadius: 12,
+      marginTop: 10,
+      alignItems: "center",
+    },
 
-  addButtonText: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "600",
-  },
+    addButtonText: {
+      color: ui?.buttonTextColor || "#fff",
+      fontWeight: "700",
+    },
 
-  qtyContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FF8C00",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    marginTop: 6,
-  },
+    qtyContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor:
+        ui?.qtyBgColor || "#E50914",
+      borderRadius: 12,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      marginTop: 10,
+    },
 
-  qtyButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    qtyButton: {
+      backgroundColor: "#fff",
+      width: 26,
+      height: 26,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  qtyText: {
-    color: "#FF8C00",
-    fontWeight: "700",
-    fontSize: 16,
-  },
+    qtyText: {
+      color: ui?.buttonColor || "#E50914",
+      fontWeight: "700",
+      fontSize: 16,
+    },
 
-  qtyValue: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 12,
-    marginHorizontal: 6,
-  },
+    qtyValue: {
+      color: "#fff",
+      fontWeight: "700",
+    },
 
-  modalOverlay: {
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-    flex: 1,
-  },
+    cartContainer: {
+      position: "absolute",
+      bottom: 20,
+      left: 20,
+      right: 20,
+      borderRadius: 20,
+    },
 
-  modalBox: {
-    width: "95%",
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 10,
-    maxHeight: "80%",
-  },
+    cartButton: {
+      backgroundColor:
+        ui?.cartBarColor || "#111",
+      paddingVertical: 16,
+      borderRadius: 20,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor:
+        ui?.primaryColor || "#E50914",
+    },
 
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FF8C00",
-    textAlign: "center",
-    marginVertical: 15,
-  },
+    cartText: {
+      color:
+        ui?.cartTextColor ||
+        ui?.primaryColor ||
+        "#E50914",
+      fontWeight: "800",
+    },
 
-  closeButton: {
-    margin: 10,
-    backgroundColor: "#FF8C00",
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.7)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  closeText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 15,
-  },
+    modalBox: {
+      width: "92%",
+      backgroundColor:
+        ui?.modalBgColor || "#1A1A1A",
+      borderRadius: 24,
+      padding: 16,
+      maxHeight: "80%",
+    },
 
-  cartContainer: {
-    position: "absolute",
-    bottom: 20,
-    left: 15,
-    right: 15,
-    zIndex: 999,
-  },
-
-  cartButton: {
-    backgroundColor: "#FF8C00",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-
-  cartText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 16,
-  },
-});
+    modalTitle: {
+      color:
+        ui?.modalTitleColor ||
+        ui?.primaryColor ||
+        "#E50914",
+      fontSize: 20,
+      fontWeight: "800",
+      textAlign: "center",
+      marginBottom: 20,
+    },
+  });

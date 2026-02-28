@@ -1,57 +1,97 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import useSessionStore from "../store/useSessionStore";
 
-const ProfileComponent = ({navigation}) => {
-  const { user, loading,clearSession } = useSessionStore();
+const ProfileComponent = ({ navigation, uiConfig = {} }) => {
+  const { user, loading, clearSession } = useSessionStore();
+
+  const styles = createStyles(uiConfig);
+
+  /* ================= LOADER ================= */
 
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#007bff" />
+        <ActivityIndicator
+          size="large"
+          color={uiConfig?.primaryColor || "#E50914"}
+        />
       </View>
     );
   }
+
+  /* ================= GUEST ================= */
 
   if (!user) {
     return (
       <View style={styles.container}>
-        <Text style={{fontWeight:"700"}}>Hey Guest</Text>
-        <Text style={styles.infoText}>No user logged in.</Text>
-        <View style={{flexDirection:"row",padding:10}}>
-            <Text style={{fontSize:18}}>Click here to </Text>
-            <TouchableOpacity style={{}}
-            onPress={()=>{navigation.navigate("Auth")}}
-            >
-            <Text style={{textDecorationLine:"underline",fontSize:18}}>login</Text>
-            </TouchableOpacity>
+        <View style={styles.avatarCircle}>
+          <Ionicons
+            name="person-outline"
+            size={30}
+            color={uiConfig?.primaryColor || "#E50914"}
+          />
         </View>
+
+        <Text style={styles.guestTitle}>Hey Guest 👋</Text>
+        <Text style={styles.guestSub}>
+          Login to manage your account
+        </Text>
+
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={() => navigation.navigate("Auth")}
+        >
+          <Text style={styles.loginText}>Login</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
+  /* ================= USER ================= */
+
   return (
     <View style={styles.container}>
-      {/* Profile Image */}
       <View style={styles.profileHeader}>
-        <View style={{backgroundColor:"#DBDBDB",padding:10,borderRadius:"100%"}}>
-            <Text style={{fontSize:25}}>&#128100;</Text>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>
+            {user?.name?.charAt(0)?.toUpperCase() || "U"}
+          </Text>
         </View>
-        <Text style={styles.name}>{user.name || "User"}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+
+        <Text style={styles.name}>
+          {user.name || "User"}
+        </Text>
+
+        <Text style={styles.email}>
+          {user.email}
+        </Text>
       </View>
 
-      {/* User Info */}
       <View style={styles.infoCard}>
         <View style={styles.infoRow}>
-          <Ionicons name="call-outline" size={20} color="#007bff" />
-          <Text style={styles.infoText}>{user.phone || "N/A"}</Text>
+          <Ionicons
+            name="call-outline"
+            size={18}
+            color={uiConfig?.primaryColor || "#E50914"}
+          />
+          <Text style={styles.infoText}>
+            {user.phone || "N/A"}
+          </Text>
         </View>
       </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={()=>{clearSession()}}>
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={() => clearSession()}
+      >
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </View>
@@ -60,69 +100,118 @@ const ProfileComponent = ({navigation}) => {
 
 export default ProfileComponent;
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#f9f9f9",
-    alignItems: "center",
-    padding: 15,
-    width:"95%",
-    margin:10,
-    borderRadius:10
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: "#007bff",
-    // marginBottom: 10,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  email: {
-    fontSize: 16,
-    color: "#666",
-  },
-  infoCard: {
-    backgroundColor: "#fff",
-    width: "100%",
-    padding: 15,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  infoRow: {
-    flexDirection: "row",
-  },
-  infoText: {
-    fontSize: 16,
-    marginLeft: 10,
-    color: "#444",
-  },
-  logoutButton: {
-    backgroundColor: "#ff4d4d",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginTop: 15,
-  },
-  logoutText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
+/* =========================================================
+   DYNAMIC STYLES
+========================================================= */
+
+const createStyles = (ui) =>
+  StyleSheet.create({
+
+    container: {
+      backgroundColor: ui?.cardBgColor || "#1C1C1C",
+      alignItems: "center",
+      padding: 20,
+      marginHorizontal: 16,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: ui?.cardBorderColor || "#2A2A2A",
+      marginBottom: 20
+    },
+
+    loaderContainer: {
+      padding: 30,
+      alignItems: "center"
+    },
+
+    profileHeader: {
+      alignItems: "center",
+      marginBottom: 15
+    },
+
+    avatarCircle: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      backgroundColor: ui?.primaryColor || "#E50914",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 10
+    },
+
+    avatarText: {
+      fontSize: 26,
+      fontWeight: "800",
+      color: "#fff"
+    },
+
+    name: {
+      fontSize: 20,
+      fontWeight: "800",
+      color: ui?.cardTextColor || "#fff"
+    },
+
+    email: {
+      fontSize: 14,
+      color: ui?.cardTextColor || "#ccc",
+      marginTop: 4
+    },
+
+    infoCard: {
+      width: "100%",
+      backgroundColor: ui?.pageBgColor || "#111",
+      padding: 14,
+      borderRadius: 14,
+      marginTop: 10
+    },
+
+    infoRow: {
+      flexDirection: "row",
+      alignItems: "center"
+    },
+
+    infoText: {
+      fontSize: 15,
+      marginLeft: 10,
+      color: ui?.cardTextColor || "#fff"
+    },
+
+    logoutButton: {
+      backgroundColor: ui?.primaryColor || "#E50914",
+      paddingVertical: 12,
+      paddingHorizontal: 40,
+      borderRadius: 14,
+      marginTop: 20
+    },
+
+    logoutText: {
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: "700"
+    },
+
+    guestTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: ui?.cardTextColor || "#fff",
+      marginTop: 10
+    },
+
+    guestSub: {
+      fontSize: 14,
+      color: ui?.cardTextColor || "#aaa",
+      marginBottom: 15
+    },
+
+    loginButton: {
+      backgroundColor: ui?.primaryColor || "#E50914",
+      paddingVertical: 10,
+      paddingHorizontal: 30,
+      borderRadius: 14
+    },
+
+    loginText: {
+      color: "#fff",
+      fontWeight: "700"
+    }
+
+  });

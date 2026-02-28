@@ -13,7 +13,7 @@ const useCmsStore = create((set) => ({
       // 🔥 Uses apiClient (merchant_id auto attached)
       const data = await apiClient.get(apiClient.Urls.getCmsByMerchant);
 
-      console.log("✅ CMS DATA:", data);
+      // console.log("✅ CMS DATA:", data);
 
       set({
         cmsData: data,

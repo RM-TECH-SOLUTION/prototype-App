@@ -1,100 +1,128 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Image, StyleSheet, Animated, Dimensions } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  Animated,
+  Dimensions,
+  Text,
+} from "react-native";
 import splashScreenImage from "../assets/bgHome1.png";
-import logoImage from "../assets/AR-Fashion.png"; 
-import useCmsStore from '../store/useCmsStore';
+import logoImage from "../assets/AR-Fashion.png";
+import useCmsStore from "../store/useCmsStore";
 import useSessionStore from "../store/useSessionStore";
 
 const { width, height } = Dimensions.get("window");
- const LOGO_SIZE = 200;
+const LOGO_SIZE = 160;
 
 const SplashScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const { getCmsData ,cmsData} = useCmsStore();
-  const [splashCmsData, setSplashCmsData] = useState([]);
-  const { user} = useSessionStore();
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const bgScale = useRef(new Animated.Value(1)).current;
 
+  const { getCmsData, cmsData } = useCmsStore();
+  const { user } = useSessionStore();
 
-  useEffect(()=>{
-    getCmsData()
-  },[])
-
-useEffect(() => {
-  if (!Array.isArray(cmsData)) return;
-  const splashItem = cmsData.find(
-    (item) => item.modelSlug === "splashScreen"
-  );
-  if (!splashItem || !splashItem.cms) return;
-
-  const formattedCms = Object.keys(splashItem.cms).reduce(
-    (acc, key) => {
-      acc[key] = splashItem.cms[key]?.fieldValue;
-      return acc;
-    },
-    {}
-  );
-  setSplashCmsData(formattedCms);
-}, [cmsData]);
+  const [splashCmsData, setSplashCmsData] = useState({});
 
   useEffect(() => {
-    // Fade-in background image
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
+    getCmsData();
+  }, []);
 
-    // Rotate logo 360 degrees once
-    Animated.timing(rotateAnim, {
-      toValue: 1,
-      duration: 1500, // 1.5 seconds for one rotation
-      useNativeDriver: true,
-    }).start();
+  useEffect(() => {
+    if (!Array.isArray(cmsData)) return;
 
-    // Navigate after delay
+    const splashItem = cmsData.find(
+      (item) => item.modelSlug === "splashConfiguration"
+    );
+
+    if (!splashItem || !splashItem.cms) return;
+
+    const formattedCms = Object.keys(splashItem.cms).reduce(
+      (acc, key) => {
+        acc[key] = splashItem.cms[key]?.fieldValue;
+        return acc;
+      },
+      {}
+    );
+
+    setSplashCmsData(formattedCms);
+  }, [cmsData]);
+
+  useEffect(() => {
+    // Smooth fade in
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bgScale, {
+        toValue: 1.1,
+        duration: 4000,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     const timeout = setTimeout(() => {
       if (user) {
-        navigation.replace("Home"); 
+        navigation.replace("Home");
+      } else {
+        navigation.replace("Walkthrough");
       }
-      else{
-         navigation.replace("Walkthrough"); 
-      }
-    }, 3000);
+    }, splashCmsData?.autoNavigationTimeout || 3000);
 
     return () => clearTimeout(timeout);
-  }, [navigation,splashCmsData]);
-
-  // Interpolate rotation from 0 to 360 degrees
-  const rotateInterpolate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
+  }, [navigation, splashCmsData]);
 
   return (
     <View style={styles.container}>
+      {/* Background Image with zoom effect */}
       <Animated.Image
-  source={
-    splashCmsData?.backgroundImage
-      ? { uri: splashCmsData.backgroundImage }
-      : splashScreenImage // fallback local image
-  }
-  style={[styles.fullImage, { opacity: fadeAnim }]}
-  resizeMode="cover"
-/>
+        source={
+          splashCmsData?.backgroundImage
+            ? { uri: splashCmsData.backgroundImage }
+            : splashScreenImage
+        }
+        style={[
+          styles.fullImage,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: bgScale }],
+          },
+        ]}
+        resizeMode="cover"
+      />
 
-<Animated.Image
-  source={
-    splashCmsData?.logo
-      ? { uri: splashCmsData.logo }
-      : logoImage // fallback local logo
-  }
-  style={[
-    styles.logo,
-    { transform: [{ rotate: rotateInterpolate }] },
-  ]}
-/>
+      {/* Dark Overlay for premium look */}
+      <View style={styles.overlay} />
 
+      {/* Logo + Text Section */}
+      <Animated.View
+        style={[
+          styles.centerContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <Image
+          source={
+            splashCmsData?.logoImage
+              ? { uri: splashCmsData.logoImage }
+              : logoImage
+          }
+          style={styles.logo}
+          resizeMode="contain"
+        />
+
+      </Animated.View>
     </View>
   );
 };
@@ -104,20 +132,37 @@ export default SplashScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#000",
   },
   fullImage: {
     width: width,
     height: height,
     position: "absolute",
-    top: 0,
-    left: 0,
   },
- logo: {
-  width: LOGO_SIZE,
-  height: LOGO_SIZE,
-  borderRadius: LOGO_SIZE / 2, 
-  zIndex: 2,
-}
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logo: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    marginBottom: 20,
+  },
+  brandText: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    letterSpacing: 2,
+  },
+  tagline: {
+    fontSize: 14,
+    color: "#E50914",
+    marginTop: 6,
+    letterSpacing: 1,
+  },
 });

@@ -32,7 +32,7 @@ const useAuthStore = create((set) => ({
         payload
       );
 
-      console.log("LOGIN RESULT 👉", result);
+      // console.log("LOGIN RESULT 👉", result);
 
       if (result?.success) {
         Alert.alert("Success", result.message || "Login successful!");
@@ -82,7 +82,7 @@ const useAuthStore = create((set) => ({
         payload
       );
 
-      console.log("REGISTER RESULT 👉", result);
+      // console.log("REGISTER RESULT 👉", result);
 
       if (result?.success) {
         Alert.alert("Success", "Registered successfully!");

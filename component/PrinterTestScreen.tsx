@@ -39,7 +39,7 @@ const PrinterTestScreen = () => {
       const ok = await ensureBluetoothPermission();
       if (!ok) return;
 
-      console.log("Printing via Bluetooth...");
+      // console.log("Printing via Bluetooth...");
 
    
       const payload =

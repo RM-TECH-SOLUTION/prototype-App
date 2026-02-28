@@ -7,12 +7,12 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import logoImage from "../assets/AR-Fashion.png";
 import useSessionStore from "../store/useSessionStore";
+import useCmsStore from "../store/useCmsStore";
 
 const { width, height } = Dimensions.get("window");
 
@@ -20,14 +20,14 @@ const LoginComponent = ({
   onRegister,
   navigation,
   loginUser,
-  loading
+  loading,
 }) => {
-
   const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
+  const [cmsConfig, setCmsConfig] = useState({});
 
   const { isLoggedIn } = useSessionStore();
-
+  const { cmsData } = useCmsStore();
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -35,45 +35,120 @@ const LoginComponent = ({
     }
   }, [isLoggedIn]);
 
+  // 🔥 Get CMS Login Config
+  useEffect(() => {
+    const loginConfig = cmsData?.find(
+      (item) => item.modelSlug === "loginConfiguration"
+    );
+
+    if (!loginConfig?.cms) return;
+
+    const formatted = Object.keys(loginConfig.cms).reduce(
+      (acc, key) => {
+        acc[key] = loginConfig.cms[key]?.fieldValue;
+        return acc;
+      },
+      {}
+    );
+
+    setCmsConfig(formatted);
+  }, [cmsData]);
+
   return (
-    <LinearGradient
-      colors={["#E65100", "#FFB74D"]}
-      style={styles.gradientContainer}
-    >
+    <View style={styles.container}>
+      {/* Background */}
+      <Image
+        source={
+          cmsConfig?.backgroundImage
+            ? { uri: cmsConfig.backgroundImage }
+            : require("../assets/bgHome1.png")
+        }
+        style={styles.background}
+        resizeMode="cover"
+      />
+
+      <View style={styles.overlay} />
+
       <KeyboardAwareScrollView
         enableOnAndroid
-        extraScrollHeight={120}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollContainer}
       >
-        <View style={styles.innerContainer}>
-
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor:
+                cmsConfig?.cardBackgroundColor ||
+                "rgba(0,0,0,0.75)",
+            },
+          ]}
+        >
           {/* Logo */}
-          <View style={styles.logoContainer}>
-            <Image source={logoImage} style={styles.logo} />
-          </View>
+          <Image
+            source={
+              cmsConfig?.logoImage
+                ? { uri: cmsConfig.logoImage }
+                : require("../assets/AR-Fashion.png")
+            }
+            style={styles.logo}
+            resizeMode="contain"
+          />
 
-          <Text style={styles.title}>Welcome Back 👋</Text>
-          <Text style={styles.subtitle}>Login to continue</Text>
+          <Text style={styles.title}>
+            {cmsConfig?.title || "Welcome Back"}
+          </Text>
 
-          {/* Email / Phone */}
-          <View style={styles.inputContainer}>
-            <AntDesign name="mail" size={20} color="#007bff" />
+          <Text style={styles.subtitle}>
+            {cmsConfig?.subtitle ||
+              "Login to continue"}
+          </Text>
+
+          {/* Identity */}
+          <View
+            style={[
+              styles.inputContainer,
+              {
+                borderColor:
+                  cmsConfig?.inputBorderColor ||
+                  "#E50914",
+              },
+            ]}
+          >
+            <AntDesign
+              name="user"
+              size={18}
+              color="#E50914"
+            />
             <TextInput
               style={styles.input}
               placeholder="Email or Phone"
-              autoCapitalize="none"
+              placeholderTextColor="#aaa"
               value={identity}
               onChangeText={setIdentity}
             />
           </View>
 
           {/* Password */}
-          <View style={styles.inputContainer}>
-            <AntDesign name="lock" size={20} color="#007bff" />
+          <View
+            style={[
+              styles.inputContainer,
+              {
+                borderColor:
+                  cmsConfig?.inputBorderColor ||
+                  "#E50914",
+              },
+            ]}
+          >
+            <AntDesign
+              name="lock"
+              size={18}
+              color="#E50914"
+            />
             <TextInput
               style={styles.input}
               placeholder="Password"
+              placeholderTextColor="#aaa"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -82,83 +157,122 @@ const LoginComponent = ({
 
           {/* Login Button */}
           <TouchableOpacity
-            style={styles.button}
-            onPress={() => loginUser(identity, password)}
+            style={[
+              styles.button,
+              {
+                backgroundColor:
+                  cmsConfig?.buttonColor ||
+                  "#E50914",
+              },
+            ]}
+            onPress={() =>
+              loginUser(identity, password)
+            }
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? "Logging in..." : "Login"}
-            </Text>
+            {loading ? (
+              <ActivityIndicator
+                color={
+                  cmsConfig?.buttonTextColor ||
+                  "#fff"
+                }
+              />
+            ) : (
+              <Text
+                style={[
+                  styles.buttonText,
+                  {
+                    color:
+                      cmsConfig?.buttonTextColor ||
+                      "#fff",
+                  },
+                ]}
+              >
+                Login
+              </Text>
+            )}
           </TouchableOpacity>
 
           {/* Register */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account?</Text>
+            <Text style={{ color: "#ccc" }}>
+              Don't have an account?
+            </Text>
             <TouchableOpacity onPress={onRegister}>
-              <Text style={styles.registerText}> Register</Text>
+              <Text style={styles.registerText}>
+                {" "}
+                Register
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Skip */}
-          <TouchableOpacity
-            style={{ marginTop: 20 }}
-            onPress={() => navigation.replace("Home")}
-          >
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-
+          {cmsConfig?.skipEnabled && (
+            <TouchableOpacity
+              style={{ marginTop: 20 }}
+              onPress={() =>
+                navigation.replace("Home")
+              }
+            >
+              <Text style={styles.skipText}>
+                Skip
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </KeyboardAwareScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 export default LoginComponent;
 
-/* ================= STYLES ================= */
-
 const styles = StyleSheet.create({
-  gradientContainer: {
+  container: {
+    flex: 1,
+  },
+  background: {
+    position: "absolute",
     width,
     height,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  innerContainer: {
+  card: {
     width: "85%",
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 20,
     padding: 25,
-    alignItems: "center",
-    elevation: 8,
-  },
-  logoContainer: {
-    marginBottom: 15,
+    borderRadius: 25,
   },
   logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    alignSelf: "center",
+    marginBottom: 15,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
-    color: "#FF8C00",
+    color: "#fff",
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
-    color: "#555",
+    fontSize: 14,
+    color: "#ccc",
+    textAlign: "center",
     marginBottom: 25,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
-    backgroundColor: "#f5f6fa",
-    borderRadius: 10,
+    borderWidth: 1,
+    borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 12,
     marginBottom: 18,
@@ -166,35 +280,29 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 16,
+    color: "#fff",
   },
   button: {
-    backgroundColor: "#FF8C00",
-    width: "100%",
     paddingVertical: 15,
-    borderRadius: 10,
+    borderRadius: 30,
     alignItems: "center",
     marginTop: 10,
   },
   buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   footer: {
     flexDirection: "row",
+    justifyContent: "center",
     marginTop: 20,
   },
-  footerText: {
-    color: "#555",
-  },
   registerText: {
-    color: "#007bff",
-    fontWeight: "600",
+    color: "#E50914",
+    fontWeight: "bold",
   },
   skipText: {
-    color: "red",
-    textDecorationLine: "underline",
-    fontWeight: "600",
+    color: "#E50914",
+    textAlign: "center",
   },
 });

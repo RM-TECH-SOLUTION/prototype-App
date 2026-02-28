@@ -7,6 +7,7 @@ import {
   FlatList,
   Dimensions,
   StyleSheet,
+  Animated,
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");
@@ -14,6 +15,7 @@ const { width, height } = Dimensions.get("window");
 const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const handleNext = () => {
     if (currentIndex < walkthroughData.length - 1) {
@@ -30,26 +32,46 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
     const index = Math.round(
       event.nativeEvent.contentOffset.x / width
     );
+
+    if (index !== currentIndex) {
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+
     setCurrentIndex(index);
   };
 
   const renderItem = ({ item }) => (
+    <>
     <View style={styles.slide}>
-      {/* Background Image */}
       <Image
         source={{ uri: item.image }}
         style={styles.image}
         resizeMode="cover"
       />
 
-      {/* Overlay Content */}
-      <View style={styles.overlay}>
+      {/* Dark Gradient Overlay */}
+      <View style={styles.overlay} />
+
+      {/* Content */}
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.description}>
           {item.description}
         </Text>
-      </View>
+      </Animated.View>
     </View>
+    </>
   );
 
   return (
@@ -66,16 +88,28 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
         scrollEventThrottle={16}
       />
 
-      {/* Pagination Dots */}
-      <View style={styles.dotsContainer}>
+      {/* Skip Button */}
+      <TouchableOpacity
+        style={styles.skipBtn}
+        onPress={onFinish}
+      >
+        <Text style={styles.skipText}>Skip</Text>
+      </TouchableOpacity>
+
+      {/* Pagination */}
+      <View style={styles.pagination}>
         {walkthroughData.map((_, index) => (
           <View
             key={index}
             style={[
-              styles.dot,
+              styles.paginationBar,
               {
+                width:
+                  index === currentIndex ? 28 : 10,
                 backgroundColor:
-                  index === currentIndex ? "#ff6347" : "#ccc",
+                  index === currentIndex
+                    ? "#E50914"
+                    : "rgba(255,255,255,0.3)",
               },
             ]}
           />
@@ -83,7 +117,11 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
       </View>
 
       {/* CTA Button */}
-      <TouchableOpacity style={styles.button} onPress={handleNext}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleNext}
+        activeOpacity={0.8}
+      >
         <Text style={styles.buttonText}>
           {currentIndex === walkthroughData.length - 1
             ? "Get Started"
@@ -95,6 +133,7 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
 };
 
 export default WalkthroughComponent;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -106,60 +145,67 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: "75%",
+    height: "100%",
   },
   overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  content: {
     position: "absolute",
-    bottom: 120,
+    bottom: 180,
     width: "100%",
+    paddingHorizontal: 30,
     alignItems: "center",
-    paddingHorizontal: 24,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#2E7D32",
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
     textAlign: "center",
-    marginBottom: 10,
-    textShadowColor: "#fff",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-    width:"100%"
+    marginBottom: 14,
+    letterSpacing: 1,
   },
   description: {
     fontSize: 16,
-    color: "#fff",
+    color: "#E0E0E0",
     textAlign: "center",
-    lineHeight: 22,
-    fontWeight: "700",
-    textShadowColor: "#2E7D32",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    lineHeight: 24,
   },
-  dotsContainer: {
+  skipBtn: {
     position: "absolute",
-    bottom: 100,
+    top: 60,
+    right: 20,
+  },
+  skipText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+  },
+  pagination: {
+    position: "absolute",
+    bottom: 130,
     flexDirection: "row",
     alignSelf: "center",
   },
-  dot: {
-    width: 10,
-    height: 10,
+  paginationBar: {
+    height: 6,
     borderRadius: 5,
     marginHorizontal: 5,
   },
   button: {
     position: "absolute",
-    bottom: 40,
+    bottom: 60,
     alignSelf: "center",
-    backgroundColor: "#ff6347",
-    paddingVertical: 14,
-    paddingHorizontal: 60,
-    borderRadius: 10,
+    backgroundColor: "#E50914",
+    paddingVertical: 16,
+    paddingHorizontal: 80,
+    borderRadius: 30,
+    elevation: 5,
   },
   buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    letterSpacing: 1,
   },
 });

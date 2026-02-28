@@ -1,4 +1,4 @@
-import React, { useMemo, useState,useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   StatusBar,
   Alert,
   Image,
-  Modal
+  Modal,
 } from "react-native";
 
 import RazorpayCheckout from "react-native-razorpay";
@@ -17,6 +17,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import useSessionStore from "../store/useSessionStore";
 import AddAddressComponent from "./AddAddressComponent";
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 const CheckoutComponent = ({
   cartItems = [],
@@ -26,38 +30,34 @@ const CheckoutComponent = ({
   deleteCartItem,
   clearCart,
   saveUserAddress,
-  getProfile,profile
+  getProfile,
+  profile,
+  uiConfig = {},
+  addressUiConfig = {}
 }) => {
-
   const navigation = useNavigation();
+  const { user } = useSessionStore();
+
   const [loading, setLoading] = useState(false);
-  const { user} = useSessionStore();
-  const keyId = merchantData?.keyId
-  const keySecret = merchantData?.keySecret
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-const [paymentMethod, setPaymentMethod] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState(null);
 
+  const styles = createStyles(uiConfig);
+
+  /* ================= ADDRESS ================= */
 
   useEffect(() => {
-  if (profile?.address) {
-    setSelectedAddress(profile.address);
-  }
-}, [profile]);
-
-useEffect(()=>{
-getProfile()
-},[])
-
-
-  console.log(profile,"useruser selectedAddress",);
-  
+    if (profile?.address) {
+      setSelectedAddress(profile.address);
+    }
+  }, [profile]);
 
   /* ================= TOTAL ================= */
 
   const total = useMemo(() => {
     let sum = 0;
-    cartItems.forEach(i => {
+    cartItems.forEach((i) => {
       sum += Number(i.total || 0);
     });
     return sum.toFixed(2);
@@ -65,590 +65,420 @@ getProfile()
 
   /* ================= PAYMENT ================= */
 
-const createOrder = async (orderType) => {
-  try {
-    setLoading(true);
+  const createOrder = async (orderType) => {
+    try {
+      setLoading(true);
 
-    const res = await fetch(
-      "https://api.rmtechsolution.com/create_order.php",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: Number(total),
-          merchant_id: merchantData?.merchantId,
-          keyId: merchantData?.keyId,
-          keySecret: merchantData?.keySecret,
-          user_id: user?.id,
-          phone: user?.phone,
-          items: cartItems,
-          orderType: orderType,
-          discount: 0,
-          address: JSON.stringify(selectedAddress)
-        })
+      const res = await fetch(
+        "https://api.rmtechsolution.com/create_order.php",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: Number(total),
+            merchant_id: merchantData?.merchantId,
+            keyId: merchantData?.keyId,
+            keySecret: merchantData?.keySecret,
+            user_id: user?.id,
+            phone: user?.phone,
+            items: cartItems,
+            orderType,
+            discount: 0,
+            address: JSON.stringify(selectedAddress),
+          }),
+        }
+      );
+
+      const order = await res.json();
+
+      if (!order.success) {
+        Alert.alert("Order Error", order.message);
+        return;
       }
-    );
 
-    const order = await res.json();
+      if (orderType === "online") {
+        const options = {
+          key: order.key,
+          order_id: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          name: merchantData?.name || "ZZZ Mobiles",
+          description: "Order Payment",
+          prefill: {
+            contact: user?.phone,
+            name: user?.name,
+            email: user?.email,
+          },
+          theme: {
+            color: uiConfig?.primaryColor || "#E50914",
+          },
+        };
 
-    if (!order.success) {
-      Alert.alert("Order Error", order.message);
-      return;
+        RazorpayCheckout.open(options)
+          .then(async (data) => {
+            await fetch(
+              "https://api.rmtechsolution.com/create_order.php",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  order_id: order.id,
+                  payment_id: data.razorpay_payment_id,
+                  merchant_id: merchantData?.merchantId,
+                  user_id: user?.id,
+                  status: "success",
+                }),
+              }
+            );
+
+            clearCart();
+            getCart();
+            Alert.alert("Success", "Payment Successful");
+            navigation.navigate("Home");
+          })
+          .catch(() => {
+            Alert.alert("Payment Cancelled");
+          });
+      }
+
+      if (orderType === "COD") {
+        Alert.alert("Order Placed", "Cash on Delivery Selected");
+        clearCart();
+        getCart();
+        navigation.navigate("Home");
+      }
+    } catch (e) {
+      Alert.alert("Error", "Something went wrong");
+    } finally {
+      setLoading(false);
     }
-
-    /* ================= ONLINE ================= */
-
-    if (orderType === "online") {
-
-      const orderId = order.id; // 🔥 Save order id
-
-      const options = {
-        key: order.key,
-        order_id: orderId,
-        amount: order.amount,
-        currency: order.currency,
-        name: merchantData?.name || "RM Tech Solution",
-        description: "Order Payment",
-        prefill: {
-          contact: user?.phone,
-          name: user?.name,
-          email: user?.email
-        },
-        theme: { color: "#FF8C00" }
-      };
-
-      RazorpayCheckout.open(options)
-        .then(async (data) => {
-
-          console.log("Payment Success:", data);
-
-          // ✅ SEND SUCCESS TO BACKEND
-          await fetch(
-            "https://api.rmtechsolution.com/create_order.php",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                order_id: orderId,
-                payment_id: data.razorpay_payment_id,
-                merchant_id: merchantData?.merchantId,
-                user_id: user?.id,
-                phone: user?.phone,
-                items: cartItems,
-                address: JSON.stringify(selectedAddress),
-                amount: Number(total),
-                orderType: "online",
-                discount: 0,
-                status: "success"
-              })
-            }
-          );
-
-          clearCart();
-          getCart();
-          Alert.alert("Success", "Payment successful");
-          navigation.navigate("Home");
-        })
-
-        .catch(async (error) => {
-
-          console.log("Payment Failed:", error);
-
-          // ✅ SEND FAILURE TO BACKEND
-          await fetch(
-            "https://api.rmtechsolution.com/create_order.php",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                order_id: orderId,
-                merchant_id: merchantData?.merchantId,
-                user_id: user?.id,
-                phone: user?.phone,
-                items: cartItems,
-                address: JSON.stringify(selectedAddress),
-                amount: Number(total),
-                orderType: "online",
-                discount: 0,
-                status: "failure"
-              })
-            }
-          );
-
-          Alert.alert("Payment Cancelled");
-        });
-    }
-
-    /* ================= COD ================= */
-
-    if (orderType === "COD") {
-      Alert.alert("Order Placed", "Cash on Delivery selected");
-      clearCart();
-      getCart();
-      navigation.navigate("Home");
-    }
-
-  } catch (e) {
-    console.log("ORDER ERROR:", e);
-    Alert.alert("Error", "Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  const handleIncrease = async (item) => {
-
-    await updateQty(item?.cart_id, "inc");
-    await getCart();   // 🔥 refresh
   };
 
-    const handleDecrease = async (item) => {
-      await updateQty(item?.cart_id, "dec");
-    await getCart();   // 🔥 refresh
-  };
+  /* ================= CART ITEM ================= */
 
-  const deleteCart = async (item) =>{
-    await deleteCartItem(item?.cart_id)
-  }
+  const renderItem = ({ item }) => {
+    const imageUrl = item.images
+      ? JSON.parse(item.images)[0]
+      : null;
 
-  /* ================= ITEM UI ================= */
+    return (
+      <View style={styles.itemCard}>
+        <View style={{ flexDirection: "row", flex: 1 }}>
+          <Image source={{ uri: imageUrl }} style={styles.productImage} />
 
-  console.log(cartItems,"cartItemshhh");
-  // Nothing found in your cart
+          <View style={{ flex: 1 }}>
+            <Text style={styles.name}>{item.item_name}</Text>
 
-  // ORDER NOW
-  
+            <View style={styles.qtyRow}>
+              <TouchableOpacity
+                style={styles.qtyBtn}
+                onPress={() => updateQty(item.cart_id, "dec")}
+              >
+                <Text style={styles.qtyBtnText}>-</Text>
+              </TouchableOpacity>
 
+              <Text style={styles.qtyValue}>{item.quantity}</Text>
 
-
-const renderItem = ({ item }) => {
-  console.log(item, "itemitem list");
-  const imageUrl = item.images
-  ? JSON.parse(item.images)[0]
-  : null;
-
-  return (
-    <View style={styles.itemCard}>
-
-      {/* LEFT SIDE */}
-      <View style={{ flexDirection: "row", flex: 1 }}>
-
-        {/* PRODUCT IMAGE */}
-        <Image
-          source={{ uri: imageUrl}}
-          style={styles.productImage}
-          resizeMode="cover"
-        />
-
-        {/* DETAILS */}
-        <View style={styles.leftSection}>
-          <Text style={styles.name}>{item.item_name}</Text>
-
-          {/* QTY CONTROLS */}
-          <View style={styles.qtyRow}>
-            <TouchableOpacity style={styles.qtyBtn} 
-            onPress={()=>{
-              handleDecrease(item)
-            }}>
-              <Text style={styles.qtyBtnText}>-</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.qtyValue}>{item.quantity}</Text>
-
-            <TouchableOpacity style={styles.qtyBtn}
-            onPress={()=>{
-              handleIncrease(item)
-            }}
-            >
-              <Text style={styles.qtyBtnText}>+</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.qtyBtn}
+                onPress={() => updateQty(item.cart_id, "inc")}
+              >
+                <Text style={styles.qtyBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* RIGHT SIDE */}
-      <View style={styles.rightSection}>
-        <Text style={styles.price}>₹{item.total}</Text>
-        <TouchableOpacity 
-        onPress={()=>{
-          deleteCart(item)
-        }}
-        >
-        <Ionicons name="trash-outline" size={22} color="red" />
-        </TouchableOpacity>
+        <View style={{ alignItems: "flex-end" }}>
+          <Text style={styles.price}>₹{item.total}</Text>
+          <TouchableOpacity
+            onPress={() => deleteCartItem(item.cart_id)}
+          >
+            <Ionicons name="trash-outline" size={20} color="red" />
+          </TouchableOpacity>
+        </View>
       </View>
+    );
+  };
 
-    </View>
-  );
-};
+  /* ================= UI ================= */
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF8C00" />
-
-      <View style={styles.header}>
-        <Ionicons name="chevron-back" size={26} color="#fff" />
-        <Text style={styles.title}>Checkout</Text>
-        <View style={{ width: 25 }} />
-      </View>
-
-       {cartItems.length < 1 ?
-      <View style={{width:"100%",height:"100%",justifyContent:"center",alignItems:"center"}}>
-      <View style={{}}>
-        <Text style={{fontSize:20}}> Nothing found in your cart</Text>
-      </View>
-      {/* <TouchableOpacity style={{marginTop:20,padding:10,backgroundColor:"#FF8C00",borderRadius:10}}>
-        <Text style={{color:"#fff",fontSize:15,fontWeight:"bold"}}>Order Now</Text>
-      </TouchableOpacity> */}
-      </View>
-
-      :
-        <>
-
-      <FlatList
-        data={cartItems}
-        keyExtractor={i => i.cart_id.toString()}
-        renderItem={renderItem}
+      <StatusBar
+        backgroundColor={uiConfig?.headerBgColor || "#000"}
       />
 
-      {/* ===== DELIVERY ADDRESS ===== */}
-
-{selectedAddress ? (
-
-  <View style={styles.addressCard}>
-
-    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-      <Text style={styles.addressTitle}>Delivery Address</Text>
-
-      <TouchableOpacity onPress={() => setSelectedAddress(null)}>
-        <Text style={styles.changeText}>Change</Text>
-      </TouchableOpacity>
-    </View>
-
-    <Text style={styles.addressText}>
-      {selectedAddress.building}, {selectedAddress.doorNo}
-    </Text>
-
-    <Text style={styles.addressText}>
-      {selectedAddress.street}
-    </Text>
-
-    {selectedAddress.landmark ? (
-      <Text style={styles.addressText}>
-        Landmark: {selectedAddress.landmark}
-      </Text>
-    ) : null}
-
-    <Text style={styles.addressText}>
-      {selectedAddress.city} - {selectedAddress.pincode} - {selectedAddress.state}
-    </Text>
-    <Text style={styles.addressText}>
-      {profile.phone}
-    </Text>
-
-  </View>
-
-) : (
-
-  <AddAddressComponent
-    onSave={(data) => {
-      setSelectedAddress(data);
-      saveUserAddress(data)
-      Alert.alert("Address Saved");
-      getProfile()
-    }}
-    getProfile={getProfile}
-  />
-
-)}
-      <View style={styles.bottom}>
-        <Text style={styles.total}>Total: ₹{total}</Text>
-
-        <TouchableOpacity
-          style={styles.payBtn}
-          disabled={loading}
-          onPress={() => setShowPaymentModal(true)}
-        >
-          <Text style={styles.payText}>
-            {loading ? "Processing..." : `Pay ₹${total}`}
-          </Text>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons
+            name="chevron-back"
+            size={24}
+            color={uiConfig?.headerTextColor || "#fff"}
+          />
         </TouchableOpacity>
+
+        <Text style={styles.title}>Checkout</Text>
+
+        <View style={{ width: 24 }} />
       </View>
-      </>
-      }
-      {/* ===== PAYMENT METHOD MODAL ===== */}
-<Modal visible={showPaymentModal} transparent animationType="slide">
 
-  <View style={styles.modalOverlay}>
+      {/* EMPTY CART */}
+      {cartItems.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            Your cart is empty
+          </Text>
+        </View>
+      ) : (
+        <>
+          <FlatList
+            data={cartItems}
+            keyExtractor={(i) => i.cart_id.toString()}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={false}
+          />
 
-    <View style={styles.paymentSheet}>
+          {/* ADDRESS */}
+          {selectedAddress ? (
+            <View style={styles.addressCard}>
+              <Text style={styles.addressTitle}>
+                Delivery Address
+              </Text>
+              <Text style={styles.addressText}>
+                {selectedAddress.street}
+              </Text>
+            </View>
+          ) : (
+            <AddAddressComponent
+              onSave={(data) => {
+                setSelectedAddress(data);
+                saveUserAddress(data);
+              }}
+              uiConfig={addressUiConfig}
+            />
+          )}
 
-     <View style={styles.sheetHeader}>
+          {/* BOTTOM */}
+          <View style={styles.bottom}>
+            <Text style={styles.total}>₹{total}</Text>
 
-  <Text style={styles.sheetTitle}>Choose Payment Method</Text>
+            <TouchableOpacity
+              style={styles.payBtn}
+              onPress={() => setShowPaymentModal(true)}
+            >
+              <Text style={styles.payText}>
+                Pay ₹{total}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
-  <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
-    <Ionicons name="close" size={22} color="#333" />
-  </TouchableOpacity>
+      {/* PAYMENT MODAL */}
+      <Modal visible={showPaymentModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.paymentSheet}>
+            <Text style={styles.sheetTitle}>
+              Select Payment
+            </Text>
 
-</View>
+            {uiConfig?.enableOnline !== false && (
+              <TouchableOpacity
+                style={styles.paymentOption}
+                onPress={() => createOrder("online")}
+              >
+                <Text style={styles.optionText}>
+                  Pay Online
+                </Text>
+              </TouchableOpacity>
+            )}
 
-      {/* ONLINE */}
-      <TouchableOpacity
-        style={[
-          styles.paymentOption,
-          paymentMethod === "online" && styles.activeOption
-        ]}
-        onPress={() => setPaymentMethod("online")}
-      >
-        <Text style={styles.optionText}>Pay Online</Text>
-        <Text style={styles.optionAmount}>₹{total}</Text>
-      </TouchableOpacity>
+            {uiConfig?.enableCOD !== false && (
+              <TouchableOpacity
+                style={styles.paymentOption}
+                onPress={() => createOrder("COD")}
+              >
+                <Text style={styles.optionText}>
+                  Cash On Delivery
+                </Text>
+              </TouchableOpacity>
+            )}
 
-      {/* COD */}
-      <TouchableOpacity
-        style={[
-          styles.paymentOption,
-          paymentMethod === "COD" && styles.activeOption
-        ]}
-        onPress={() => setPaymentMethod("COD")}
-      >
-        <Text style={styles.optionText}>Cash on Delivery</Text>
-        <Text style={styles.optionAmount}>₹{total}</Text>
-      </TouchableOpacity>
-
-      {/* CONTINUE */}
-      <TouchableOpacity
-        style={[
-          styles.continueBtn,
-          !paymentMethod && { opacity: 0.5 }
-        ]}
-        disabled={!paymentMethod}
-        onPress={() => {
-          setShowPaymentModal(false);
-
-         if (paymentMethod === "online") {
-            createOrder("online");
-            } else {
-                createOrder("COD");   // ✅ Now COD also calls backend
-          }
-        }}
-      >
-        <Text style={styles.continueText}>Continue</Text>
-      </TouchableOpacity>
-
-    </View>
-
-  </View>
-</Modal>
+            <TouchableOpacity
+              onPress={() => setShowPaymentModal(false)}
+            >
+              <Text style={{ textAlign: "center", marginTop: 15 }}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 export default CheckoutComponent;
 
-/* ================= STYLES ================= */
+/* =========================================================
+   DYNAMIC STYLES
+========================================================= */
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF8F0" },
+const createStyles = (ui) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: ui?.pageBgColor || "#111",
+    },
 
-  header: {
-    backgroundColor: "#FF8C00",
-    padding: 15,
-    flexDirection: "row",
-    justifyContent: "space-between"
-  },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 16,
+      backgroundColor: ui?.headerBgColor || "#000",
+    },
 
-  title: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700"
-  },
+    title: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: ui?.headerTextColor || "#fff",
+    },
 
-  item: {
-    backgroundColor: "#fff",
-    margin: 10,
-    padding: 12,
-    borderRadius: 10
-  },
+    itemCard: {
+      backgroundColor: ui?.cardBgColor || "#1A1A1A",
+      margin: 12,
+      padding: 16,
+      borderRadius: 18,
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
 
-  name: { fontSize: 15, fontWeight: "600" },
+    name: {
+      color: ui?.cardTextColor || "#fff",
+      fontWeight: "700",
+    },
 
-  bottom: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderTopWidth:1,
-    borderLeftWidth:1,
-    borderRightWidth:1,
-    elevation:2
-  },
+    price: {
+      color: ui?.primaryColor || "#E50914",
+      fontWeight: "800",
+    },
 
-  total: {
-    fontSize: 18,
-    fontWeight: "700"
-  },
+    qtyRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 8,
+    },
 
-  payBtn: {
-    backgroundColor: "#FF8C00",
-    marginTop: 10,
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center"
-  },
+    qtyBtn: {
+      backgroundColor: ui?.primaryColor || "#E50914",
+      width: 30,
+      height: 30,
+      borderRadius: 8,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  payText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700"
-  },
-  itemCard: {
-  backgroundColor: "#fff",
-  marginHorizontal: 12,
-  marginVertical: 6,
-  padding: 14,
-  borderRadius: 12,
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  elevation: 3
-},
+    qtyBtnText: {
+      color: "#fff",
+      fontWeight: "800",
+    },
 
-leftSection: {
-  flex: 1
-},
+    qtyValue: {
+      marginHorizontal: 10,
+      color: ui?.cardTextColor || "#fff",
+    },
 
-rightSection: {
-  alignItems: "flex-end"
-},
+    productImage: {
+      width: 70,
+      height: 70,
+      borderRadius: 12,
+      marginRight: 12,
+    },
 
-price: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: "#FF8C00",
-  marginBottom: 6
-},
-qtyRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  marginTop: 6
-},
+    addressCard: {
+      backgroundColor: ui?.cardBgColor || "#1A1A1A",
+      margin: 16,
+      padding: 16,
+      borderRadius: 18,
+    },
 
-qtyBtn: {
-  width: 28,
-  height: 28,
-  borderRadius: 6,
-  backgroundColor: "#FF8C00",
-  alignItems: "center",
-  justifyContent: "center"
-},
+    addressTitle: {
+      color: ui?.primaryColor || "#E50914",
+      fontWeight: "800",
+    },
 
-qtyBtnText: {
-  color: "#fff",
-  fontSize: 18,
-  fontWeight: "700"
-},
+    addressText: {
+      color: ui?.cardTextColor || "#ddd",
+      marginTop: 4,
+    },
 
-qtyValue: {
-  marginHorizontal: 10,
-  fontSize: 15,
-  fontWeight: "700",
-  color: "#333"
-},
-productImage: {
-  width: 70,
-  height: 70,
-  borderRadius: 8,
-  marginRight: 10,
-  backgroundColor: "#eee"
-},
-addressCard: {
-  backgroundColor: "#fff",
-  margin: 12,
-  padding: 14,
-  borderRadius: 12,
-  elevation: 2
-},
+    bottom: {
+      padding: 20,
+      backgroundColor: ui?.bottomBarColor || "#000",
+    },
 
-addressTitle: {
-  fontSize: 16,
-  fontWeight: "700",
-  marginBottom: 6
-},
+    total: {
+      color: ui?.cardTextColor || "#fff",
+      fontSize: 18,
+      fontWeight: "800",
+    },
 
-addressText: {
-  fontSize: 14,
-  color: "#444",
-  marginBottom: 2
-},
+    payBtn: {
+      backgroundColor: ui?.payButtonColor || "#E50914",
+      padding: 16,
+      borderRadius: 14,
+      marginTop: 10,
+      alignItems: "center",
+    },
 
-changeText: {
-  color: "#FF8C00",
-  fontWeight: "700"
-},
-modalOverlay: {
-  flex: 1,
-  backgroundColor: "rgba(0,0,0,0.4)",
-  justifyContent: "flex-end"
-},
+    payText: {
+      color: ui?.payButtonTextColor || "#fff",
+      fontWeight: "800",
+    },
 
-paymentSheet: {
-  backgroundColor: "#fff",
-  padding: 20,
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20
-},
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "flex-end",
+    },
 
-sheetTitle: {
-  fontSize: 18,
-  fontWeight: "700",
-  marginBottom: 15,
-  textAlign: "center"
-},
+    paymentSheet: {
+      backgroundColor: ui?.sheetBgColor || "#1A1A1A",
+      padding: 20,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+    },
 
-paymentOption: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  padding: 15,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: "#ddd",
-  marginBottom: 10
-},
+    sheetTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: ui?.cardTextColor || "#fff",
+      marginBottom: 15,
+    },
 
-activeOption: {
-  borderColor: "#FF8C00",
-  backgroundColor: "#FFF3E0"
-},
+    paymentOption: {
+      padding: 15,
+      borderRadius: 12,
+      backgroundColor: ui?.cardBgColor || "#2A2A2A",
+      marginBottom: 10,
+    },
 
-optionText: {
-  fontSize: 16,
-  fontWeight: "600"
-},
+    optionText: {
+      color: ui?.cardTextColor || "#fff",
+      fontWeight: "700",
+    },
 
-optionAmount: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: "#FF8C00"
-},
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-continueBtn: {
-  backgroundColor: "#FF8C00",
-  padding: 14,
-  borderRadius: 12,
-  alignItems: "center",
-  marginTop: 10
-},
-
-continueText: {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "700"
-},
-sheetHeader: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 15
-},
-});
+    emptyText: {
+      color: "#999",
+      fontSize: 16,
+    },
+  });

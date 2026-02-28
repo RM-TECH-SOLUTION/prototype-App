@@ -45,7 +45,7 @@ export default function PrinterTestScreen1() {
         return;
       }
 
-      console.log("Printing via Bluetooth...");
+      // console.log("Printing via Bluetooth...");
 
       // 🔥 VERY IMPORTANT: use \r\n (CRLF), not \n
       const payload =

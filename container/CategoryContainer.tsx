@@ -1,7 +1,8 @@
 import { View } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect ,useState} from "react";
 import CategoryListComponent from "../component/CategoryListComponent";
 import orderingStore from "../store/orderingStore";
+import useCmsStore from "../store/useCmsStore";
 
 const CategoryContainer = () => {
 
@@ -27,8 +28,29 @@ const CategoryContainer = () => {
   const handleSelectCategory = (catalogId) => {
     getCatalogItems(catalogId);
   };
+  const { cmsData } = useCmsStore();
 
-  console.log(cartItems,"cartItemshh");
+  const [categoryUiConfig, setCategoryUiConfig] = useState({});
+
+  // console.log(cartItems,"cartItemshh");
+
+  useEffect(() => {
+  if (!Array.isArray(cmsData)) return;
+
+  const config = cmsData.find(
+    (item) => item.modelSlug === "categoryPageConfiguration"
+  );
+
+  if (!config?.cms) return;
+
+  const formatted = Object.values(config.cms).reduce((acc, field) => {
+    acc[field.fieldKey] = field.fieldValue;
+    return acc;
+  }, {});
+
+  setCategoryUiConfig(formatted);
+
+}, [cmsData]);
   
 
   return (
@@ -42,6 +64,8 @@ const CategoryContainer = () => {
         addToCart={addToCart}
         updateQty={updateQty}
         deleteCartItem={deleteCartItem}
+         getCart={getCart}
+        uiConfig={categoryUiConfig}
       />
     </View>
   );
