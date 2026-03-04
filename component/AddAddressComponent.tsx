@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,15 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 
 const AddAddressComponent = ({
   onSave,
-  getProfile,
-  uiConfig = {}
+  uiConfig = {},
+  getProfile
 }) => {
 
   const styles = createStyles(uiConfig);
@@ -46,9 +47,11 @@ const AddAddressComponent = ({
     try {
       setLoadingLocation(true);
 
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } =
+        await Location.requestForegroundPermissionsAsync();
+
       if (status !== "granted") {
-        alert("Location permission denied");
+        Alert.alert("Permission Denied", "Location access is required.");
         return;
       }
 
@@ -56,10 +59,11 @@ const AddAddressComponent = ({
         accuracy: Location.Accuracy.High
       });
 
-      const addressResponse = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
-      });
+      const addressResponse =
+        await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude
+        });
 
       if (addressResponse.length > 0) {
         const loc = addressResponse[0];
@@ -74,16 +78,18 @@ const AddAddressComponent = ({
           pincode: loc.postalCode || ""
         });
       }
-    } catch {
-      alert("Unable to fetch location");
+
+    } catch (error) {
+      Alert.alert("Error", "Unable to fetch location.");
     } finally {
       setLoadingLocation(false);
     }
   };
 
-  /* ================= SAVE ================= */
+  /* ================= VALIDATION + SAVE ================= */
 
   const handleSave = () => {
+
     if (
       !address.building ||
       !address.doorNo ||
@@ -92,7 +98,7 @@ const AddAddressComponent = ({
       !address.state ||
       !address.pincode
     ) {
-      alert("Please fill all required fields");
+      Alert.alert("Validation", "Please fill all required fields.");
       return;
     }
 
@@ -100,17 +106,32 @@ const AddAddressComponent = ({
       SERVICEABLE_PINCODES.length &&
       !SERVICEABLE_PINCODES.includes(address.pincode)
     ) {
-      alert("Service not available in this area");
+      Alert.alert("Not Serviceable", "Service not available in this area.");
       return;
     }
 
-    onSave(address);
+    onSave && onSave(address);
+
     setShowModal(false);
+
+    // Reset form after save (optional)
+    setAddress({
+      building: "",
+      doorNo: "",
+      street: "",
+      landmark: "",
+      city: "",
+      state: "",
+      pincode: ""
+    });
   };
+
+  /* ================= UI ================= */
 
   return (
     <View>
 
+      {/* ADD ADDRESS BUTTON */}
       <TouchableOpacity
         style={styles.addBtn}
         onPress={() => setShowModal(true)}
@@ -120,22 +141,39 @@ const AddAddressComponent = ({
         </Text>
       </TouchableOpacity>
 
-      <Modal visible={showModal} animationType="slide" transparent>
+      {/* MODAL */}
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        transparent
+      >
         <View style={styles.overlay}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             <View style={styles.modalContainer}>
-              <ScrollView>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+              >
 
                 {/* HEADER */}
                 <View style={styles.header}>
                   <Text style={styles.heading}>
-                    Delivery Address
+                    {uiConfig?.modalTitle || "Delivery Address"}
                   </Text>
 
-                  <TouchableOpacity onPress={() => setShowModal(false)}>
-                    <Ionicons name="close" size={22} color={uiConfig?.headerTextColor || uiConfig?.headingColor || "#000"} />
+                  <TouchableOpacity
+                    onPress={() => {getProfile(),setShowModal(false)}}
+                  >
+                    <Ionicons
+                      name="close"
+                      size={22}
+                      color={
+                        uiConfig?.headerTextColor ||
+                        uiConfig?.headingColor ||
+                        "#fff"
+                      }
+                    />
                   </TouchableOpacity>
                 </View>
 
@@ -145,7 +183,9 @@ const AddAddressComponent = ({
                   onPress={getLiveLocation}
                 >
                   {loadingLocation ? (
-                    <ActivityIndicator color={uiConfig?.primaryColor || "#E50914"} />
+                    <ActivityIndicator
+                      color={uiConfig?.primaryColor || "#E50914"}
+                    />
                   ) : (
                     <>
                       <Ionicons
@@ -154,16 +194,22 @@ const AddAddressComponent = ({
                         color={uiConfig?.primaryColor || "#E50914"}
                       />
                       <Text style={styles.locationText}>
-                        Use Live Location
+                        {uiConfig?.liveLocationText || "Use Live Location"}
                       </Text>
                     </>
                   )}
                 </TouchableOpacity>
 
+                {/* INPUT FIELDS */}
                 {Object.keys(address).map((key) => (
                   <TextInput
                     key={key}
-                    placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
+                    placeholder={
+                      key.charAt(0).toUpperCase() + key.slice(1)
+                    }
+                    placeholderTextColor={
+                      uiConfig?.placeholderColor || "#777"
+                    }
                     style={styles.input}
                     value={address[key]}
                     onChangeText={(text) =>
@@ -172,6 +218,7 @@ const AddAddressComponent = ({
                   />
                 ))}
 
+                {/* SAVE BUTTON */}
                 <TouchableOpacity
                   style={styles.saveBtn}
                   onPress={handleSave}
@@ -194,7 +241,7 @@ const AddAddressComponent = ({
 export default AddAddressComponent;
 
 /* =========================================================
-   DYNAMIC STYLES
+   CMS DYNAMIC STYLES
 ========================================================= */
 
 const createStyles = (ui) =>
@@ -248,7 +295,10 @@ const createStyles = (ui) =>
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
-      borderColor: ui?.locationBorderColor || ui?.primaryColor || "#E50914",
+      borderColor:
+        ui?.locationBorderColor ||
+        ui?.primaryColor ||
+        "#E50914",
       padding: 12,
       borderRadius: 12,
       marginBottom: 14
@@ -267,12 +317,14 @@ const createStyles = (ui) =>
       borderRadius: 12,
       padding: 14,
       marginBottom: 12,
-      color: ui?.inputTextColor || "#fff",
-      placeholderTextColor: ui?.headerTextColor || "#555"
+      color: ui?.inputTextColor || "#fff"
     },
 
     saveBtn: {
-      backgroundColor: ui?.buttonBgColor || ui?.primaryColor || "#E50914",
+      backgroundColor:
+        ui?.buttonBgColor ||
+        ui?.primaryColor ||
+        "#E50914",
       padding: 16,
       borderRadius: 14,
       alignItems: "center",

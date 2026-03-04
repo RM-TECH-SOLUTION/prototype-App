@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -11,52 +11,22 @@ import {
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import useSessionStore from "../store/useSessionStore";
-import useCmsStore from "../store/useCmsStore";
 
 const { width, height } = Dimensions.get("window");
 
 const LoginComponent = ({
+  identity,
+  password,
+  setIdentity,
+  setPassword,
+  onLogin,
   onRegister,
-  navigation,
-  loginUser,
+  onSkip,
   loading,
+  cmsConfig,
 }) => {
-  const [identity, setIdentity] = useState("");
-  const [password, setPassword] = useState("");
-  const [cmsConfig, setCmsConfig] = useState({});
-
-  const { isLoggedIn } = useSessionStore();
-  const { cmsData } = useCmsStore();
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigation.replace("Home");
-    }
-  }, [isLoggedIn]);
-
-  // 🔥 Get CMS Login Config
-  useEffect(() => {
-    const loginConfig = cmsData?.find(
-      (item) => item.modelSlug === "loginConfiguration"
-    );
-
-    if (!loginConfig?.cms) return;
-
-    const formatted = Object.keys(loginConfig.cms).reduce(
-      (acc, key) => {
-        acc[key] = loginConfig.cms[key]?.fieldValue;
-        return acc;
-      },
-      {}
-    );
-
-    setCmsConfig(formatted);
-  }, [cmsData]);
-
   return (
     <View style={styles.container}>
-      {/* Background */}
       <Image
         source={
           cmsConfig?.backgroundImage
@@ -84,7 +54,6 @@ const LoginComponent = ({
             },
           ]}
         >
-          {/* Logo */}
           <Image
             source={
               cmsConfig?.logoImage
@@ -100,11 +69,9 @@ const LoginComponent = ({
           </Text>
 
           <Text style={styles.subtitle}>
-            {cmsConfig?.subtitle ||
-              "Login to continue"}
+            {cmsConfig?.subtitle || "Login to continue"}
           </Text>
 
-          {/* Identity */}
           <View
             style={[
               styles.inputContainer,
@@ -115,11 +82,7 @@ const LoginComponent = ({
               },
             ]}
           >
-            <AntDesign
-              name="user"
-              size={18}
-              color="#E50914"
-            />
+            <AntDesign name="user" size={18} color="#E50914" />
             <TextInput
               style={styles.input}
               placeholder="Email or Phone"
@@ -129,7 +92,6 @@ const LoginComponent = ({
             />
           </View>
 
-          {/* Password */}
           <View
             style={[
               styles.inputContainer,
@@ -140,11 +102,7 @@ const LoginComponent = ({
               },
             ]}
           >
-            <AntDesign
-              name="lock"
-              size={18}
-              color="#E50914"
-            />
+            <AntDesign name="lock" size={18} color="#E50914" />
             <TextInput
               style={styles.input}
               placeholder="Password"
@@ -155,7 +113,6 @@ const LoginComponent = ({
             />
           </View>
 
-          {/* Login Button */}
           <TouchableOpacity
             style={[
               styles.button,
@@ -165,9 +122,7 @@ const LoginComponent = ({
                   "#E50914",
               },
             ]}
-            onPress={() =>
-              loginUser(identity, password)
-            }
+            onPress={onLogin}
             disabled={loading}
           >
             {loading ? (
@@ -193,26 +148,21 @@ const LoginComponent = ({
             )}
           </TouchableOpacity>
 
-          {/* Register */}
           <View style={styles.footer}>
             <Text style={{ color: "#ccc" }}>
               Don't have an account?
             </Text>
             <TouchableOpacity onPress={onRegister}>
               <Text style={styles.registerText}>
-                {" "}
-                Register
+                {" "}Register
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Skip */}
           {cmsConfig?.skipEnabled && (
             <TouchableOpacity
               style={{ marginTop: 20 }}
-              onPress={() =>
-                navigation.replace("Home")
-              }
+              onPress={onSkip}
             >
               <Text style={styles.skipText}>
                 Skip

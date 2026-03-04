@@ -24,7 +24,7 @@ const [addressUiConfig, setAddressUiConfig] = useState({});
   useEffect(() => {
     getCart();
     getMerchant()
-    // getProfile()
+    getProfile()
   }, []);
   // console.log(merchantData,"merchantData");
 

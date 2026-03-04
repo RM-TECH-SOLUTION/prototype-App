@@ -13,12 +13,16 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import ProfileComponent from "./ProfileComponent";
 import type { RootStackParamList } from "./AppNavigator";
 import useCmsStore from "../store/useCmsStore";
+import useAuthStore from "../store/useAuthStore";
+import useSessionStore from "../store/useSessionStore";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const AccountComponent = () => {
   const navigation = useNavigation<Nav>();
   const { cmsData } = useCmsStore();
+  const { getProfile } = useAuthStore();
+   const { profileData } = useSessionStore();
 
   const [uiConfig, setUiConfig] = useState<any>({});
 
@@ -40,6 +44,10 @@ const AccountComponent = () => {
 
   }, [cmsData]);
 
+  useEffect(()=>{
+      getProfile()
+  },[])
+
   const styles = createStyles(uiConfig);
 
   const accountList = [
@@ -58,7 +66,7 @@ const AccountComponent = () => {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        <ProfileComponent navigation={navigation} uiConfig={uiConfig}/>
+        <ProfileComponent navigation={navigation} uiConfig={uiConfig} profileData={profileData}/>
 
         <Text style={styles.sectionTitle}>Account Settings</Text>
 

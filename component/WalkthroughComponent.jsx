@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -12,47 +12,16 @@ import {
 
 const { width, height } = Dimensions.get("window");
 
-const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef(null);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-
-  const handleNext = () => {
-    if (currentIndex < walkthroughData.length - 1) {
-      flatListRef.current?.scrollToIndex({
-        index: currentIndex + 1,
-        animated: true,
-      });
-    } else {
-      onFinish && onFinish();
-    }
-  };
-
-  const handleScroll = (event) => {
-    const index = Math.round(
-      event.nativeEvent.contentOffset.x / width
-    );
-
-    if (index !== currentIndex) {
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-
-    setCurrentIndex(index);
-  };
-
+const WalkthroughComponent = ({
+  walkthroughData,
+  currentIndex,
+  fadeAnim,
+  flatListRef,
+  handleScroll,
+  handleNext,
+  onFinish,
+}) => {
   const renderItem = ({ item }) => (
-    <>
     <View style={styles.slide}>
       <Image
         source={{ uri: item.image }}
@@ -60,10 +29,8 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
         resizeMode="cover"
       />
 
-      {/* Dark Gradient Overlay */}
       <View style={styles.overlay} />
 
-      {/* Content */}
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.description}>
@@ -71,7 +38,6 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
         </Text>
       </Animated.View>
     </View>
-    </>
   );
 
   return (
@@ -88,7 +54,6 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
         scrollEventThrottle={16}
       />
 
-      {/* Skip Button */}
       <TouchableOpacity
         style={styles.skipBtn}
         onPress={onFinish}
@@ -96,7 +61,6 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
         <Text style={styles.skipText}>Skip</Text>
       </TouchableOpacity>
 
-      {/* Pagination */}
       <View style={styles.pagination}>
         {walkthroughData.map((_, index) => (
           <View
@@ -104,8 +68,7 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
             style={[
               styles.paginationBar,
               {
-                width:
-                  index === currentIndex ? 28 : 10,
+                width: index === currentIndex ? 28 : 10,
                 backgroundColor:
                   index === currentIndex
                     ? "#E50914"
@@ -116,7 +79,6 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
         ))}
       </View>
 
-      {/* CTA Button */}
       <TouchableOpacity
         style={styles.button}
         onPress={handleNext}
@@ -135,18 +97,9 @@ const WalkthroughComponent = ({ onFinish, walkthroughData = [] }) => {
 export default WalkthroughComponent;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
-  slide: {
-    width,
-    height,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
+  container: { flex: 1, backgroundColor: "#000" },
+  slide: { width, height },
+  image: { width: "100%", height: "100%" },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.55)",
@@ -200,12 +153,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 80,
     borderRadius: 30,
-    elevation: 5,
   },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
-    letterSpacing: 1,
   },
 });

@@ -10,7 +10,7 @@ const BASE_URL = rmtech?.baseUrl?.endsWith("/")
   : rmtech.baseUrl + "/";
 
 // Always number
-const merchantId = Number(9);
+const merchantId = Number(rmtech?.merchantId || 0);
 
 /* ================== API URLS ================= */
 

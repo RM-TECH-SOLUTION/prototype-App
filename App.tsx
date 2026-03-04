@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import SplashScreen from "./component/SplashScreen";
+import SplashContainer from "./container/SplashContainer";
 import { StyleSheet } from 'react-native';
 import HomeTabs from "./component/HomeTabs";
 import RegistrationScreen from "./component/RegistrationScreen"
@@ -19,7 +19,7 @@ export default function App() {
     <NavigationContainer>
       <StatusBar style="auto" />
       <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="Splash" component={SplashContainer} />
         <Stack.Screen name="Walkthrough" component={WalkthroughContainer} />
         <Stack.Screen name="Auth" component={LoginContainer} />
         <Stack.Screen name="Register" component={RegisterContainer} />

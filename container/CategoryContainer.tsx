@@ -1,16 +1,14 @@
 import { View } from "react-native";
-import React, { useEffect ,useState} from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import CategoryListComponent from "../component/CategoryListComponent";
 import orderingStore from "../store/orderingStore";
 import useCmsStore from "../store/useCmsStore";
 
 const CategoryContainer = () => {
-
   const {
     catalogModels,
     catalogItems,
     cartItems,
-    selectedCatalogId,
     loading,
     getCatalogModels,
     getCatalogItems,
@@ -20,51 +18,120 @@ const CategoryContainer = () => {
     getCart
   } = orderingStore();
 
+  const { cmsData } = useCmsStore();
+
+  const [categoryUiConfig, setCategoryUiConfig] = useState({});
+  const [cartMap, setCartMap] = useState({});
+
+  /* ================= INITIAL LOAD ================= */
+
   useEffect(() => {
     getCatalogModels();
-    getCart(); 
+    getCart();
   }, []);
+
+  /* ================= CMS FORMAT ================= */
+
+  useEffect(() => {
+    if (!Array.isArray(cmsData)) return;
+
+    const config = cmsData.find(
+      (item) => item.modelSlug === "categoryPageConfiguration"
+    );
+
+    if (!config?.cms) return;
+
+    const formatted = Object.values(config.cms).reduce((acc, field) => {
+      acc[field.fieldKey] = field.fieldValue;
+      return acc;
+    }, {});
+
+    setCategoryUiConfig(formatted);
+  }, [cmsData]);
+
+  /* ================= MAP CART ================= */
+
+  useEffect(() => {
+    const map = {};
+    cartItems.forEach((item) => {
+      map[item.item_id] = {
+        quantity: Number(item.quantity),
+        cart_id: item.cart_id,
+      };
+    });
+    setCartMap(map);
+  }, [cartItems]);
+
+  /* ================= CART TOTAL ================= */
+
+  const { totalItems, totalPrice } = useMemo(() => {
+    let count = 0;
+    let price = 0;
+
+    cartItems.forEach((item) => {
+      count += Number(item.quantity || 0);
+      price += Number(item.total || 0);
+    });
+
+    return {
+      totalItems: count,
+      totalPrice: price.toFixed(2),
+    };
+  }, [cartItems]);
+
+  /* ================= HANDLERS ================= */
 
   const handleSelectCategory = (catalogId) => {
     getCatalogItems(catalogId);
   };
-  const { cmsData } = useCmsStore();
 
-  const [categoryUiConfig, setCategoryUiConfig] = useState({});
+const handleAdd = async (item) => {
 
-  // console.log(cartItems,"cartItemshh");
+  await addToCart({
+    item_id: item.id,
+    item_name: item.name,
+    description: item.description,
+    price: item.variant?.price || item.price,
+    compare_price: item.variant?.compare_price || item.compare_price,
+    variant_id: item.variant?.id,
+    variant_name: item.variant?.variant_name,
+    quantity: 1,
+  });
 
-  useEffect(() => {
-  if (!Array.isArray(cmsData)) return;
+  getCart();
+};
 
-  const config = cmsData.find(
-    (item) => item.modelSlug === "categoryPageConfiguration"
-  );
+  const handleIncrease = async (item) => {
+    if (!cartMap[item.id]) return;
+    await updateQty(cartMap[item.id].cart_id, "inc");
+    getCart();
+  };
 
-  if (!config?.cms) return;
+  const handleDecrease = async (item) => {
+    if (!cartMap[item.id]) return;
 
-  const formatted = Object.values(config.cms).reduce((acc, field) => {
-    acc[field.fieldKey] = field.fieldValue;
-    return acc;
-  }, {});
+    if (cartMap[item.id].quantity === 1) {
+      await deleteCartItem(cartMap[item.id].cart_id);
+    } else {
+      await updateQty(cartMap[item.id].cart_id, "dec");
+    }
 
-  setCategoryUiConfig(formatted);
-
-}, [cmsData]);
-  
+    getCart();
+  };
 
   return (
     <View style={{ flex: 1 }}>
       <CategoryListComponent
         CATEGORIES={catalogModels}
         ITEMS={catalogItems}
-        cartItems={cartItems}
+        cartMap={cartMap}
+        totalItems={totalItems}
+        totalPrice={totalPrice}
         onSelectCategory={handleSelectCategory}
         loadingItems={loading}
-        addToCart={addToCart}
-        updateQty={updateQty}
-        deleteCartItem={deleteCartItem}
-         getCart={getCart}
+        onAdd={handleAdd}
+        onIncrease={handleIncrease}
+        onDecrease={handleDecrease}
         uiConfig={categoryUiConfig}
       />
     </View>
