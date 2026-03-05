@@ -145,31 +145,54 @@ const orderingStore = create((set, get) => ({
      ➕ ADD TO CART
   ====================================================== */
 
-  addToCart: async ({ item_id, item_name, price, quantity = 1 }) => {
-    set({ loading: true, errorMessage: null });
+addToCart: async ({
+  item_id,
+  item_name,
+  description = "",
+  price,
+  compare_price = null,
+  quantity = 1,
+  variant_id = null,
+  variant_name = null
+}) => {
 
-    try {
-      const res = await apiClient.post(
-        apiClient.Urls.getAddCart,
-        { item_id, item_name, price, quantity }
-      );
+  set({ loading: true, errorMessage: null });
 
-      // console.log("➕ addToCart →", res);
+  try {
 
-      if (res?.success) {
-        get().getCart();
-      } else {
-        set({ errorMessage: res?.message || "Add to cart failed" });
-      }
-    } catch (err) {
-      console.log("addToCart error", err);
+    const payload = {
+      item_id,
+      item_name,
+      description,
+      price,
+      compare_price,
+      quantity
+    };
 
-      set({ errorMessage: err.message });
-    } finally {
-      set({ loading: false });
+    // add variant if exists
+    if (variant_id) {
+      payload.variant_id = variant_id;
+      payload.variant_name = variant_name;
     }
-  },
 
+    const res = await apiClient.post(
+      apiClient.Urls.getAddCart,
+      payload
+    );
+
+    if (res?.success) {
+      get().getCart();
+    } else {
+      set({ errorMessage: res?.message || "Add to cart failed" });
+    }
+
+  } catch (err) {
+    console.log("addToCart error", err);
+    set({ errorMessage: err.message });
+  } finally {
+    set({ loading: false });
+  }
+},
   /* ======================================================
      🔁 UPDATE QTY
   ====================================================== */

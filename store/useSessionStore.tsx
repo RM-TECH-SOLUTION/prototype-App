@@ -10,6 +10,7 @@ const useSessionStore = create(
 
       user: null,
       isLoggedIn: false,
+      profileData:null,
 
       /* ================= ACTIONS ================= */
 
@@ -18,6 +19,12 @@ const useSessionStore = create(
         set({
           user,
           isLoggedIn: !!user,
+        }),
+
+         setProfile: (profileData) =>
+        set({
+          profileData,
+          isLoggedIn: !!profileData,
         }),
 
       // Update partial user fields

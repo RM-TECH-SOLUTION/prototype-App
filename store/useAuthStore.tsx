@@ -107,6 +107,56 @@ const useAuthStore = create((set) => ({
     }
   },
 
+      saveUserAddress: async ( address) => {
+ 
+    try {
+      const result = await apiClient.post(
+        apiClient.Urls.saveUserAddress,
+        {
+    address: address
+  }
+      );
+
+      console.log("SAVE ADDRESS RESULT 👉", result);
+
+      if (result?.success) {
+        Alert.alert("Success", "Address saved successfully");
+      } else {
+        Alert.alert("Error", result?.message || "Failed to save address");
+      }
+
+      return result;
+    } catch (error) {
+      console.log("SAVE ADDRESS ERROR 👉", error.message);
+      Alert.alert("Error", "Network error: " + error.message);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+       getProfile: async ( ) => {
+      const session = useSessionStore.getState();
+ 
+    try {
+      const result = await apiClient.post(
+        apiClient.Urls.getProfile,
+ 
+      );
+      console.log(result,"resultv");
+      
+      if (result?.success) {
+      set({ profile: result?.user
+});
+      session.setProfile(result?.user);
+      } 
+      return result;
+    } catch (error) {
+      console.log("SAVE ADDRESS ERROR 👉", error.message);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   /* ================= LOGOUT ================= */
 
   logoutUser: () => {
