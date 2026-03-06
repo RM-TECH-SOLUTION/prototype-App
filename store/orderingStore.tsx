@@ -20,6 +20,7 @@ const orderingStore = create((set, get) => ({
   merchantData:null,
   loyaltySettings: null,
   couponCodeResponse:null,
+  orderHistoryResponse:null,
 
   /* ======================================================
      📦 GET CATALOG MODELS
@@ -364,6 +365,31 @@ addToCart: async ({
       set({ loading: false });
     }
   },
+  orderHistory: async () => {
+    set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.get(
+        apiClient.Urls.order_history
+      );
+
+      console.log(" order_history →", res);
+
+      if (res?.success) {
+         set({ orderHistoryResponse: res.data || [] });
+      } else {
+        set({ errorMessage: res?.message || "Failed to load order history" });
+        return [];
+      }
+    } catch (err) {
+      console.log("order_history error", err);
+
+      set({ errorMessage: err.message });
+      return [];
+    } finally {
+      set({ loading: false });
+    }
+  },  
 
 }));
 

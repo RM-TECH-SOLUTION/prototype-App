@@ -8,145 +8,170 @@ import {
   StatusBar,
   TouchableOpacity
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
-const orders = [
-  {
-    id: "ORD-98231",
-    item_name: "Men Oversized T-Shirt",
-    image: "https://i.imgur.com/JqKDdxj.jpg",
-    amount: 499,
-    date: "12 Mar 2026",
-    status: "Delivered"
-  },
-  {
-    id: "ORD-98232",
-    item_name: "Wireless Earbuds",
-    image: "https://i.imgur.com/8Km9tLL.jpg",
-    amount: 1299,
-    date: "10 Mar 2026",
-    status: "Shipped"
-  },
-  {
-    id: "ORD-98233",
-    item_name: "Women Casual Kurti",
-    image: "https://i.imgur.com/0y8Ftya.jpg",
-    amount: 799,
-    date: "8 Mar 2026",
-    status: "Processing"
-  }
-];
+/* ORDER FLOW */
 
-const steps = ["Processing", "Shipped", "Delivered"];
+const steps = ["pending", "accepted", "shipped", "delivered"];
 
-const OrderHistoryScreen = () => {
+const OrderHistoryScreen = ({ orderHistoryResponse = [] }) => {
 
   const navigation = useNavigation();
 
-  const renderProgress = (status) => {
+  /* ================= PROGRESS BAR ================= */
 
-    const currentStep = steps.indexOf(status);
+const steps = ["pending", "accepted", "shipped", "delivered"];
 
-    return (
-      <View style={styles.progressContainer}>
-        {steps.map((step, index) => {
+const stepLabels = {
+  pending: "Order",
+  accepted: "Accepted",
+  shipped: "Shipped",
+  delivered: "Delivered"
+};
 
-          const active = index <= currentStep;
+const renderProgress = (status) => {
 
-          return (
-            <View key={index} style={styles.step}>
+  const currentStep = steps.indexOf(status?.toLowerCase());
 
+  return (
+    <View style={styles.progressContainer}>
+
+      {steps.map((step, index) => {
+
+        const active = index <= currentStep;
+
+        return (
+          <View key={index} style={styles.step}>
+
+            <View
+              style={[
+                styles.circle,
+                { backgroundColor: active ? "#4CAF50" : "#444" }
+              ]}
+            />
+
+            {index !== steps.length - 1 && (
               <View
                 style={[
-                  styles.circle,
-                  { backgroundColor: active ? "#4CAF50" : "#ccc" }
+                  styles.line,
+                  {
+                    backgroundColor:
+                      index < currentStep ? "#4CAF50" : "#444"
+                  }
                 ]}
               />
+            )}
 
-              {index !== steps.length - 1 && (
-                <View
-                  style={[
-                    styles.line,
-                    { backgroundColor: index < currentStep ? "#4CAF50" : "#ccc" }
-                  ]}
-                />
-              )}
+            <Text
+              style={[
+                styles.stepLabel,
+                { color: active ? "#4CAF50" : "#777" }
+              ]}
+            >
+              {stepLabels[step]}
+            </Text>
 
-              <Text
-                style={[
-                  styles.stepLabel,
-                  { color: active ? "#4CAF50" : "#999" }
-                ]}
-              >
-                {step}
-              </Text>
+          </View>
+        );
+      })}
 
-            </View>
-          );
-        })}
-      </View>
-    );
-  };
+    </View>
+  );
+};
+
+  /* ================= CARD ================= */
 
   const renderItem = ({ item }) => {
 
+    const product = item?.items?.[0];
+
+    const image =
+      product?.images?.[0] ||
+      "https://via.placeholder.com/100";
+
+    const name = product?.item_name || "Product";
+
+    const date = new Date(item.created_at).toLocaleDateString(
+      "en-IN",
+      {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      }
+    );
+
     return (
+
       <View style={styles.card}>
 
-        <Image source={{ uri: item.image }} style={styles.image} />
-
-        <View style={styles.info}>
-
-          <Text style={styles.name}>{item.item_name}</Text>
+        <View style={{flexDirection:"row"}}>
+          <View style={{marginRight:15}}>
+        <Image source={{ uri: image }} style={styles.image} />
+        </View>
+        <View >
+          <Text style={styles.name}>
+            {name}
+          </Text>
 
           <Text style={styles.orderId}>
-            Order ID: {item.id}
+            Order ID: {item.order_id}
           </Text>
 
           <Text style={styles.date}>
-            Ordered on {item.date}
+            Ordered on {date}
           </Text>
 
           <Text style={styles.price}>
             ₹{item.amount}
           </Text>
+          </View>
+        </View>
 
-          {renderProgress(item.status)}
+        <View style={styles.info}>
+
+          {renderProgress(item.order_status)}
 
         </View>
 
       </View>
+
     );
   };
+
+  /* ================= UI ================= */
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
 
-      {/* STATUS BAR */}
       <StatusBar backgroundColor="#111" barStyle="light-content" />
 
       {/* HEADER */}
+
       <View style={styles.header}>
 
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={26} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={styles.title}>Order History</Text>
+        <Text style={styles.title}>
+          Order History
+        </Text>
 
         <View style={{ width: 26 }} />
 
       </View>
 
-      {/* ORDER LIST */}
+      {/* LIST */}
+
       <FlatList
-        data={orders}
-        keyExtractor={(item) => item.id}
+        data={orderHistoryResponse}
+        keyExtractor={(item) => item.order_id}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 20 }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 20 }}
       />
 
     </SafeAreaView>
@@ -154,6 +179,9 @@ const OrderHistoryScreen = () => {
 };
 
 export default OrderHistoryScreen;
+
+
+/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
 
@@ -178,7 +206,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    flexDirection: "row",
+    flexDirection: "column",
     backgroundColor: "#1C1C1C",
     padding: 16,
     borderRadius: 20,
@@ -196,11 +224,20 @@ const styles = StyleSheet.create({
     marginLeft: 12
   },
 
-  name: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#fff"
-  },
+nameBox: {
+  backgroundColor: "#2A2A2A",
+  padding: 6,
+  borderRadius: 8,
+  marginBottom: 6
+},
+
+name: {
+  fontSize: 14,
+  fontWeight: "700",
+  color: "#fff",
+  lineHeight: 18,
+  width:"70%"
+},
 
   orderId: {
     fontSize: 12,
@@ -220,10 +257,12 @@ const styles = StyleSheet.create({
     color: "#fff"
   },
 
+  /* ================= PROGRESS BAR ================= */
+
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10
+    marginTop: 12
   },
 
   step: {
@@ -246,8 +285,9 @@ const styles = StyleSheet.create({
   },
 
   stepLabel: {
-    fontSize: 11,
-    marginTop: 5
+    fontSize: 10,
+    marginTop: 6,
+    textTransform: "capitalize"
   }
 
 });
