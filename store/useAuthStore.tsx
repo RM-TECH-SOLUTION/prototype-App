@@ -59,53 +59,74 @@ const useAuthStore = create((set) => ({
 
   /* ================= REGISTER ================= */
 
-  registerUser: async (name, email, phone, password) => {
-    set({ errorMessage: null, success: false });
+  registerUser: async (
+  name,
+  email,
+  phone,
+  password,
+  referralCode = null,
+  gender = null
+) => {
 
-    if (!name || !email || !phone || !password) {
-      Alert.alert("Error", "All fields are required");
-      return;
+  set({ errorMessage: null, success: false });
+
+  if (!name || !email || !phone || !password) {
+    Alert.alert("Error", "All fields are required");
+    return;
+  }
+
+  set({ loading: true });
+
+  try {
+
+    const payload = {
+      name,
+      email,
+      phone,
+      password,
+      referral_code: referralCode,
+      gender
+    };
+
+    const result = await apiClient.post(
+      apiClient.Urls.register,
+      payload
+    );
+
+    if (result?.success) {
+
+      Alert.alert("Success", "Registered successfully!");
+
+      const session = useSessionStore.getState();
+      session.setUser(result.user);
+
+      set({ success: true, errorMessage: null });
+
+    } else {
+
+      Alert.alert("Error", result?.message || "Registration failed");
+
+      set({
+        success: false,
+        errorMessage: result?.message || "Registration failed",
+      });
+
     }
 
-    set({ loading: true });
+  } catch (error) {
 
-    try {
-      const payload = {
-        name,
-        email,
-        phone,
-        password
-      };
+    console.log("REGISTER ERROR 👉", error.message);
 
-      const result = await apiClient.post(
-        apiClient.Urls.register,
-        payload
-      );
+    set({ success: false, errorMessage: error.message });
 
-      // console.log("REGISTER RESULT 👉", result);
+    Alert.alert("Error", "Network error: " + error.message);
 
-      if (result?.success) {
-        Alert.alert("Success", "Registered successfully!");
+  } finally {
 
-        const session = useSessionStore.getState();
-        session.setUser(result.user);
+    set({ loading: false });
 
-        set({ success: true, errorMessage: null });
-      } else {
-        Alert.alert("Error", result?.message || "Registration failed");
-        set({
-          success: false,
-          errorMessage: result?.message || "Registration failed",
-        });
-      }
-    } catch (error) {
-      console.log("REGISTER ERROR 👉", error.message);
-      set({ success: false, errorMessage: error.message });
-      Alert.alert("Error", "Network error: " + error.message);
-    } finally {
-      set({ loading: false });
-    }
-  },
+  }
+},
 
       saveUserAddress: async ( address) => {
  
@@ -116,8 +137,6 @@ const useAuthStore = create((set) => ({
     address: address
   }
       );
-
-      console.log("SAVE ADDRESS RESULT 👉", result);
 
       if (result?.success) {
         Alert.alert("Success", "Address saved successfully");

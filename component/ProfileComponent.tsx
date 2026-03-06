@@ -95,6 +95,16 @@ const ProfileComponent = ({
 
         <Text style={styles.name}>{user.name}</Text>
         <Text style={styles.email}>{user.email}</Text>
+        <View style={{flexDirection:"row",alignItems:"center",marginTop:4,}}>
+          <Ionicons
+            name="call-outline"
+            size={18}
+            color={uiConfig?.primaryColor || "#E50914"}
+            style={{marginRight:4}}
+          />
+          <Text style={styles.email}>{user.phone}</Text>
+        </View>
+        
       </View>
 
       {/* LOYALTY POINTS */}
@@ -112,43 +122,27 @@ const ProfileComponent = ({
       </View>
 
       {/* REFERRAL SECTION */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Your Referral Code</Text>
+     <View style={styles.card}>
+  <Text style={styles.sectionTitle}>Your Referral Code</Text>
 
-        <View style={styles.referralBox}>
-          <Text style={styles.referralCode}>
-            {profileData?.referral_code || "N/A"}
-          </Text>
-        </View>
+  <View style={styles.referralBox}>
 
-        <TouchableOpacity
-          style={styles.shareButton}
-          onPress={handleShareReferral}
-        >
-          <Ionicons
-            name="share-social-outline"
-            size={18}
-            color="#fff"
-          />
-          <Text style={styles.shareText}>
-            Share Referral Code
-          </Text>
-        </TouchableOpacity>
-      </View>
+    {/* LEFT SIDE → CODE */}
+    <Text style={styles.referralCode}>
+      {profileData?.referral_code || "N/A"}
+    </Text>
 
-      {/* PHONE INFO */}
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Ionicons
-            name="call-outline"
-            size={18}
-            color={uiConfig?.primaryColor || "#E50914"}
-          />
-          <Text style={styles.cardText}>
-            {user.phone || "N/A"}
-          </Text>
-        </View>
-      </View>
+    {/* RIGHT SIDE → SHARE BUTTON */}
+    <TouchableOpacity
+      style={styles.shareButton}
+      onPress={handleShareReferral}
+    >
+      <Ionicons name="share-social-outline" size={16} color="#fff" />
+      <Text style={styles.shareText}>Share</Text>
+    </TouchableOpacity>
+
+  </View>
+</View>
 
       {/* LOGOUT */}
       <TouchableOpacity
@@ -170,12 +164,12 @@ const createStyles = (ui) =>
     container: {
       backgroundColor: ui?.cardBgColor || "#1C1C1C",
       alignItems: "center",
-      padding: 20,
+      padding: 15,
       marginHorizontal: 16,
       borderRadius: 20,
       borderWidth: 1,
       borderColor: ui?.cardBorderColor || "#2A2A2A",
-      marginBottom: 20
+      marginBottom: 10
     },
 
     loaderContainer: {
@@ -185,21 +179,20 @@ const createStyles = (ui) =>
 
     profileHeader: {
       alignItems: "center",
-      marginBottom: 20
     },
 
     avatarCircle: {
-      width: 70,
-      height: 70,
+      width: 45,
+      height: 45,
       borderRadius: 35,
       backgroundColor: ui?.primaryColor || "#E50914",
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 10
+      marginBottom: 5
     },
 
     avatarText: {
-      fontSize: 26,
+      fontSize: 22,
       fontWeight: "800",
       color: "#fff"
     },
@@ -221,7 +214,7 @@ const createStyles = (ui) =>
       backgroundColor: ui?.pageBgColor || "#111",
       padding: 15,
       borderRadius: 14,
-      marginTop: 12
+      marginTop: 10
     },
 
     row: {
@@ -236,18 +229,19 @@ const createStyles = (ui) =>
     },
 
     sectionTitle: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: "700",
       color: ui?.cardTextColor || "#fff",
-      marginBottom: 10
     },
 
     referralBox: {
       backgroundColor: ui?.cardBorderColor || "#2A2A2A",
-      padding: 12,
-      borderRadius: 10,
-      alignItems: "center",
-      marginBottom: 10
+      flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  borderRadius: 10,
+  padding: 10,
+  marginTop: 8
     },
 
     referralCode: {
@@ -260,7 +254,7 @@ const createStyles = (ui) =>
     shareButton: {
       flexDirection: "row",
       backgroundColor: ui?.primaryColor || "#E50914",
-      padding: 12,
+      padding: 7,
       borderRadius: 10,
       alignItems: "center",
       justifyContent: "center"
@@ -274,10 +268,10 @@ const createStyles = (ui) =>
 
     logoutButton: {
       backgroundColor: ui?.primaryColor || "#E50914",
-      paddingVertical: 12,
-      paddingHorizontal: 40,
+      paddingVertical: 10,
+      paddingHorizontal: 30,
       borderRadius: 14,
-      marginTop: 20
+      marginTop: 10
     },
 
     logoutText: {

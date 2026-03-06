@@ -18,6 +18,8 @@ const orderingStore = create((set, get) => ({
   // Cart
   cartItems: [],
   merchantData:null,
+  loyaltySettings: null,
+  couponCodeResponse:null,
 
   /* ======================================================
      📦 GET CATALOG MODELS
@@ -49,6 +51,94 @@ const orderingStore = create((set, get) => ({
       set({ loading: false });
     }
   },
+
+  /* ======================================================
+   🎁 GET LOYALTY SETTINGS
+====================================================== */
+
+getLoyaltySettings: async () => {
+
+  set({ loading: true, errorMessage: null });
+
+  try {
+
+    const res = await apiClient.get(
+      apiClient.Urls.getLoyaltySettings
+    );
+
+    // console.log("🎁 getLoyaltySettings →", res);
+
+    if (res?.success) {
+      set({ loyaltySettings: res.settings || null });
+    } else {
+      set({
+        loyaltySettings: null,
+        errorMessage: res?.message || "Failed to load loyalty settings",
+      });
+    }
+
+  } catch (err) {
+
+    console.log("getLoyaltySettings error", err);
+
+    set({ errorMessage: err.message });
+
+  } finally {
+    set({ loading: false });
+  }
+},
+
+apply_coupon: async (coupon_code, amount) => {
+
+  set({ loading: true, errorMessage: null });
+
+  try {
+
+    const res = await apiClient.post(
+      apiClient.Urls.apply_coupon,
+      {
+        coupon: coupon_code,
+        amount: amount,
+      }
+    );
+
+    if (res?.success) {
+
+      set({
+        couponCodeResponse: res,
+        errorMessage: null
+      });
+
+      return res; // important
+
+    } else {
+
+      set({
+        couponCodeResponse: null,
+        errorMessage: res?.message || "Invalid coupon"
+      });
+
+      return null;
+    }
+
+  } catch (err) {
+
+    console.log("apply_coupon error", err);
+
+    set({
+      errorMessage: err.message
+    });
+
+    return null;
+
+  } finally {
+
+    set({ loading: false });
+
+  }
+},
+    // console.log("🎁 apply_coupon →", res );
+    
 
   /* ======================================================
      🧾 GET ITEMS BY CATALOG
@@ -244,6 +334,30 @@ addToCart: async ({
       }
     } catch (err) {
       console.log("deleteCartItem error", err);
+
+      set({ errorMessage: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  clearCart: async () => {
+    // set({ loading: true, errorMessage: null });
+
+    try {
+      const res = await apiClient.post(
+        apiClient.Urls.clearCart
+      );
+
+      console.log(" clearCart →", res);
+
+      if (res?.success) {
+        get().getCart();
+      } else {
+        set({ errorMessage: res?.message || "Delete failed" });
+      }
+    } catch (err) {
+      console.log("clearCart error", err);
 
       set({ errorMessage: err.message });
     } finally {

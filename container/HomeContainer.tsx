@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import HomeTabs from "../component/HomeTabs";
 import useCmsStore from "../store/useCmsStore";
+import orderingStore from "../store/orderingStore";
 
 const normalizeCmsFields = (cms) => {
   if (!cms) return null;
@@ -23,6 +24,7 @@ const normalizeCmsFields = (cms) => {
 
 const HomeContainer = () => {
   const { cmsData, getCmsData } = useCmsStore();
+  const {getLoyaltySettings} = orderingStore();
 
   const [uiConfig, setUiConfig] = useState({});
   const [homeBanner, setHomeBanner] = useState(null);
@@ -31,6 +33,7 @@ const HomeContainer = () => {
 
   useEffect(() => {
     getCmsData();
+    getLoyaltySettings();
   }, []);
 
   useEffect(() => {

@@ -38,7 +38,9 @@ const URLS = {
   razorpay: BASE_URL + "razorpay.php",
   getMerchant: BASE_URL + "getMerchant.php",
   saveUserAddress:BASE_URL + "save_user_address.php",
-  getProfile:BASE_URL + "get_profile.php"
+  getProfile:BASE_URL + "get_profile.php",
+  getLoyaltySettings: BASE_URL + "get_loyalty_settings.php",
+  apply_coupon: BASE_URL + "apply_coupon.php"
 };
 
 /* ================= API CLIENT ================= */

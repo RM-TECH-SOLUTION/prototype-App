@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  SafeAreaView
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -245,249 +246,284 @@ const CategoryListComponent = ({
           </View>
         </View>
       </Modal>
-      <Modal visible={pdpVisible} transparent animationType="slide">
+     <Modal visible={pdpVisible} transparent animationType="slide" >
+     
 
-        <View style={dynamicStyles.modalOverlay}>
+  <View style={dynamicStyles.modalOverlay}>
+     
 
-          <View style={[dynamicStyles.modalBox, { maxHeight: "80%" }]}>
+    <View style={[dynamicStyles.modalBox2, { 
+      borderRadius: 24,
+      padding: 16,height: "100%" }]}>
 
-            {selectedProduct && (
+      {/* BACK BUTTON */}
+       <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 10,
+          marginTop:30
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => {
+            setPdpVisible(false);
+            setShowFullSpec(false);
+          }}
+          style={{
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 20,
+            backgroundColor: "#1A1A1A",
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "700" }}>
+            ← Back
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-              <FlatList
-                showsVerticalScrollIndicator={false}
-                data={[selectedProduct]}
-                keyExtractor={() => "pdp"}
-                renderItem={() => {
 
-                  const specText = selectedProduct.specifications || "";
-                  const shortSpec = specText.substring(0, 220);
+      {selectedProduct && (
 
-                  return (
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          data={[selectedProduct]}
+          keyExtractor={() => "pdp"}
+          renderItem={() => {
 
-                    <View>
+            const specText = selectedProduct.specifications || "";
+            const shortSpec = specText.substring(0, 220);
 
-                      {/* IMAGE SLIDER */}
-                      <FlatList
-                        data={selectedProduct.images || []}
-                        horizontal
-                        pagingEnabled
-                        showsHorizontalScrollIndicator={false}
-                        keyExtractor={(img, i) => i.toString()}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            activeOpacity={0.9}
-                            onPress={() => {
-                              setActiveImage(item);
-                              setImageViewerVisible(true);
-                            }}
-                          >
-                            <Image
-                              source={{ uri: item }}
-                              style={{
-                                width: width - 90,
-                                height: 240,
-                                borderRadius: 16,
-                                marginRight: 10
-                              }}
-                              resizeMode="cover"
-                            />
-                          </TouchableOpacity>
-                        )}
-                      />
+            return (
 
-                      {/* TITLE */}
-                      <Text style={{
-                        fontSize: 18,
-                        fontWeight: "800",
-                        color: "#fff",
-                        marginTop: 10
-                      }}>
-                        {selectedProduct.name}
-                      </Text>
+              <View style={{}}>
 
-                      {/* BRAND */}
-                      {selectedProduct.brand && (
-                        <Text style={{ color: "#aaa", marginTop: 4 }}>
-                          {selectedProduct.brand}
-                        </Text>
-                      )}
-
-                      {/* PRICE */}
-                      <View style={{ flexDirection: "row", marginTop: 6 }}>
-
-                        <Text style={{
-                          color: "#fff",
-                          fontSize: 18,
-                          fontWeight: "700"
-                        }}>
-                          ₹{selectedVariant?.price || selectedProduct.price}
-                        </Text>
-
-                        {(selectedVariant?.compare_price || selectedProduct.compare_price) && (
-
-                          <Text style={{
-                            marginLeft: 10,
-                            color: "#888",
-                            textDecorationLine: "line-through"
-                          }}>
-                            ₹{selectedVariant?.compare_price || selectedProduct.compare_price}
-                          </Text>
-
-                        )}
-
-                      </View>
-
-                      {/* VARIANT SELECTOR */}
-                      {selectedProduct.variants?.length > 0 && (
-
-                        <View style={{ marginTop: 16 }}>
-
-                          <Text style={{
-                            color: "#fff",
-                            fontWeight: "700",
-                            marginBottom: 8
-                          }}>
-                            Select Variant
-                          </Text>
-
-                          <FlatList
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            data={selectedProduct.variants}
-                            keyExtractor={(v) => v.id.toString()}
-                            renderItem={({ item }) => {
-
-                              const active = selectedVariant?.id === item.id;
-
-                              return (
-
-                                <TouchableOpacity
-                                  style={{
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 14,
-                                    borderRadius: 12,
-                                    marginRight: 10,
-                                    borderWidth: 1,
-                                    borderColor: active ? "#E50914" : "#444",
-                                    backgroundColor: active ? "#E50914" : "#1A1A1A"
-                                  }}
-                                  onPress={() => setSelectedVariant(item)}
-                                >
-
-                                  <Text style={{ color: "#fff" }}>
-                                    {item.variant_name}
-                                  </Text>
-
-                                </TouchableOpacity>
-
-                              )
-
-                            }}
-                          />
-
-                        </View>
-
-                      )}
-
-                      {/* SPECIFICATIONS */}
-                      {specText.length > 0 && (
-
-                        <View style={{ marginTop: 16 }}>
-
-                          <Text style={{
-                            color: "#fff",
-                            fontWeight: "700",
-                            marginBottom: 6
-                          }}>
-                            Specifications
-                          </Text>
-
-                          <Text style={{
-                            color: "#aaa",
-                            fontSize: 13,
-                            lineHeight: 20
-                          }}>
-                            {showFullSpec ? specText : shortSpec}
-                          </Text>
-
-                          {specText.length > 220 && (
-
-                            <TouchableOpacity
-                              onPress={() => setShowFullSpec(!showFullSpec)}
-                            >
-
-                              <Text style={{
-                                color: "#E50914",
-                                marginTop: 6,
-                                fontWeight: "600"
-                              }}>
-                                {showFullSpec ? "See Less" : "See More"}
-                              </Text>
-
-                            </TouchableOpacity>
-
-                          )}
-
-                        </View>
-
-                      )}
-
-                      {/* ADD BUTTON */}
-                      <TouchableOpacity
+                {/* IMAGE SLIDER */}
+                <FlatList
+                  data={selectedProduct.images || []}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(img, i) => i.toString()}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => {
+                        setActiveImage(item);
+                        setImageViewerVisible(true);
+                      }}
+                    >
+                      <Image
+                        source={{ uri: item }}
                         style={{
-                          backgroundColor: "#E50914",
-                          paddingVertical: 14,
+                          width: width - 90,
+                          height: 340,
                           borderRadius: 16,
-                          marginTop: 20,
-                          alignItems: "center"
+                          marginRight: 10
                         }}
-                        onPress={() => {
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  )}
+                />
 
-                          onAdd && onAdd({
-                            ...selectedProduct,
-                            variant: selectedVariant
-                          });
+                {/* TITLE */}
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: "800",
+                  color: "#fff",
+                  marginTop: 10
+                }}>
+                  {selectedProduct.name}
+                </Text>
 
-                          setPdpVisible(false);
-                          setShowFullSpec(false)
+                {/* BRAND */}
+                {selectedProduct.brand && (
+                  <Text style={{ color: "#aaa", marginTop: 4 }}>
+                    {selectedProduct.brand}
+                  </Text>
+                )}
 
-                        }}
-                      >
+                {/* PRICE */}
+                <View style={{ flexDirection: "row", marginTop: 6 }}>
 
-                        <Text style={{
-                          color: "#fff",
-                          fontWeight: "800"
-                        }}>
-                          ADD TO CART
-                        </Text>
+                  <Text style={{
+                    color: "#fff",
+                    fontSize: 18,
+                    fontWeight: "700"
+                  }}>
+                    ₹{selectedVariant?.price || selectedProduct.price}
+                  </Text>
 
-                      </TouchableOpacity>
+                  {(selectedVariant?.compare_price || selectedProduct.compare_price) && (
 
-                      {/* CLOSE */}
+                    <Text style={{
+                      marginLeft: 10,
+                      color: "#888",
+                      textDecorationLine: "line-through"
+                    }}>
+                      ₹{selectedVariant?.compare_price || selectedProduct.compare_price}
+                    </Text>
+
+                  )}
+
+                </View>
+
+                {/* VARIANTS */}
+                {selectedProduct.variants?.length > 0 && (
+
+                  <View style={{ marginTop: 16 }}>
+
+                    <Text style={{
+                      color: "#fff",
+                      fontWeight: "700",
+                      marginBottom: 8
+                    }}>
+                      Select Variant
+                    </Text>
+
+                    <FlatList
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      data={selectedProduct.variants}
+                      keyExtractor={(v) => v.id.toString()}
+                      renderItem={({ item }) => {
+
+                        const active = selectedVariant?.id === item.id;
+
+                        return (
+
+                          <TouchableOpacity
+                            style={{
+                              paddingVertical: 8,
+                              paddingHorizontal: 14,
+                              borderRadius: 12,
+                              marginRight: 10,
+                              borderWidth: 1,
+                              borderColor: active ? "#E50914" : "#444",
+                              backgroundColor: active ? "#E50914" : "#1A1A1A"
+                            }}
+                            onPress={() => setSelectedVariant(item)}
+                          >
+
+                            <Text style={{ color: "#fff" }}>
+                              {item.variant_name}
+                            </Text>
+
+                          </TouchableOpacity>
+
+                        )
+
+                      }}
+                    />
+
+                  </View>
+
+                )}
+
+                {/* SPECIFICATIONS */}
+                {specText.length > 0 && (
+
+                  <View style={{ marginTop: 16 }}>
+
+                    <Text style={{
+                      color: "#fff",
+                      fontWeight: "700",
+                      marginBottom: 6
+                    }}>
+                      Specifications
+                    </Text>
+
+                    <Text style={{
+                      color: "#aaa",
+                      fontSize: 13,
+                      lineHeight: 20
+                    }}>
+                      {showFullSpec ? specText : shortSpec}
+                    </Text>
+
+                    {specText.length > 220 && (
+
                       <TouchableOpacity
-                        style={{ alignItems: "center", marginTop: 20, marginBottom: 10 }}
-                        onPress={() => { setPdpVisible(false), setShowFullSpec(false) }}
+                        onPress={() => setShowFullSpec(!showFullSpec)}
                       >
+
                         <Text style={{
                           color: "#E50914",
-                          fontWeight: "700"
+                          marginTop: 6,
+                          fontWeight: "600"
                         }}>
-                          Close
+                          {showFullSpec ? "See Less" : "See More"}
                         </Text>
+
                       </TouchableOpacity>
 
-                    </View>
+                    )}
 
-                  )
+                  </View>
 
-                }}
-              />
+                )}
 
-            )}
+              </View>
 
-          </View>
-        </View>
-      </Modal>
+            )
+
+          }}
+        />
+
+      )}
+
+      {/* FIXED ADD TO CART */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: 15,
+          backgroundColor: "#111"
+        }}
+      >
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#E50914",
+            paddingVertical: 14,
+            borderRadius: 16,
+            alignItems: "center",
+            marginBottom:20
+          }}
+          onPress={() => {
+
+            onAdd && onAdd({
+              ...selectedProduct,
+              variant: selectedVariant
+            });
+
+            setPdpVisible(false);
+            setShowFullSpec(false);
+
+          }}
+        >
+
+          <Text style={{
+            color: "#fff",
+            fontWeight: "800"
+          }}>
+            ADD TO CART
+          </Text>
+
+        </TouchableOpacity>
+
+      </View>
+
+    </View>
+
+  </View>
+
+</Modal>
       <Modal visible={imageViewerVisible} transparent animationType="fade">
 
         <View style={{
@@ -696,6 +732,10 @@ const styles = (ui, CARD_WIDTH) =>
       borderRadius: 24,
       padding: 16,
       maxHeight: "80%",
+    },
+     modalBox2: {
+      backgroundColor:
+        ui?.modalBgColor || "#1A1A1A",
     },
 
     modalTitle: {
