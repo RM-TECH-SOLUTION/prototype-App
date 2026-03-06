@@ -11,6 +11,8 @@ import RegisterContainer from './container/RegisterContainer';
 import HomeContainer from './container/HomeContainer';
 import CheckoutContainer from './container/CheckoutContainer'
 import SavedAddressComponent from './component/SavedAddressComponent'
+import OrderHistoryContainer from './container/OrderHistoryContainer';
+import MerchantInfoContainer from './container/MerchantInfoContainer';
 
 const Stack = createStackNavigator();
 
@@ -28,6 +30,16 @@ export default function App() {
        <Stack.Screen
           name="SavedAddressComponent"
           component={SavedAddressComponent}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="OrderHistoryContainer"
+          component={OrderHistoryContainer}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="MerchantInfoContainer"
+          component={MerchantInfoContainer}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -51,9 +51,9 @@ const AccountComponent = () => {
   const styles = createStyles(uiConfig);
 
   const accountList = [
-    { icon: "time-outline", name: "History", route: "History" },
+    { icon: "time-outline", name: "History", route: "OrderHistoryContainer" },
     { icon: "home-outline", name: "My Address", route: "SavedAddressComponent" },
-    { icon: "help-circle-outline", name: "Help", route: "Help" }
+    { icon: "help-circle-outline", name: "Help", route: "MerchantInfoContainer" }
   ];
 
   return (
