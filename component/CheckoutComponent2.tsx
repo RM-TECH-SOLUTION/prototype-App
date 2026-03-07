@@ -216,7 +216,7 @@ const CheckoutComponent = ({ route,cartResponse }) => {
 
   return (
     <SafeAreaView style={[styles.container,{ paddingTop: StatusBar.currentHeight || 0 }]}>
-        <StatusBar barStyle="light-content" backgroundColor="#FF8C00" />
+        <StatusBar barStyle="light-content" backgroundColor="#000" />
       {/* 🧡 Top Header */}
       <View style={styles.topBar}>
         <TouchableOpacity

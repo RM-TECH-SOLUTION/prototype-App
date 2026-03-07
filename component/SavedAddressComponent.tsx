@@ -29,7 +29,7 @@ const SavedAddressComponent = () => {
     if (!Array.isArray(cmsData)) return;
 
     const config = cmsData.find(
-      (item) => item.modelSlug === "savedAddressPageConfiguration"
+      (item) => item.modelSlug === "addressPageConfiguration"
     );
 
     if (!config?.cms) return;

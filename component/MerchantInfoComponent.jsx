@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,56 +11,30 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import useCmsStore from "../store/useCmsStore";
 
 const MerchantInfoComponent = ({ merchant }) => {
 
   const navigation = useNavigation();
-  const { cmsData } = useCmsStore();
-
   const [activeTab, setActiveTab] = useState("terms");
-  const [uiConfig, setUiConfig] = useState({});
 
-  /* ================= CMS ================= */
-
-  useEffect(() => {
-    if (!Array.isArray(cmsData)) return;
-
-    const config = cmsData.find(
-      (item) => item.modelSlug === "merchantInfoPageConfiguration"
-    );
-
-    if (!config?.cms) return;
-
-    const formatted = Object.values(config.cms).reduce((acc, field) => {
-      acc[field.fieldKey] = field.fieldValue;
-      return acc;
-    }, {});
-
-    setUiConfig(formatted);
-
-  }, [cmsData]);
-
-  const styles = createStyles(uiConfig);
+  const styles = createStyles(merchant);
 
   /* ================= ACTIONS ================= */
 
   const openPhone = () => {
-    Linking.openURL(`tel:${merchant?.phone}`);
+    if (merchant?.merchantPhoneNumber) {
+      Linking.openURL(`tel:${merchant.merchantPhoneNumber}`);
+    }
   };
 
   const openMap = () => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${merchant?.location}`;
-    Linking.openURL(url);
+    if (merchant?.merchantLocation) {
+      Linking.openURL(merchant.merchantLocation);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-
-      <StatusBar
-        backgroundColor={uiConfig?.headerBgColor || "#111"}
-        barStyle="light-content"
-      />
 
       {/* HEADER */}
 
@@ -70,7 +44,7 @@ const MerchantInfoComponent = ({ merchant }) => {
           <Ionicons
             name="chevron-back"
             size={26}
-            color={uiConfig?.headerTextColor || "#fff"}
+            color={merchant?.headingColor || "#fff"}
           />
         </TouchableOpacity>
 
@@ -89,25 +63,29 @@ const MerchantInfoComponent = ({ merchant }) => {
         <View style={styles.card}>
 
           <Text style={styles.merchantName}>
-            {merchant?.name}
+            {merchant?.merchantName}
           </Text>
 
           <TouchableOpacity style={styles.row} onPress={openPhone}>
             <Ionicons
               name="call"
               size={18}
-              color={uiConfig?.primaryColor || "#E50914"}
+              color={merchant?.actionColor || "#E50914"}
             />
-            <Text style={styles.text}>{merchant?.phone}</Text>
+            <Text style={styles.text}>
+              {merchant?.merchantPhoneNumber}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.row} onPress={openMap}>
             <Ionicons
               name="location"
               size={18}
-              color={uiConfig?.primaryColor || "#E50914"}
+              color={merchant?.actionColor || "#E50914"}
             />
-            <Text style={styles.text}>{merchant?.location}</Text>
+            <Text style={styles.text}>
+              View Location
+            </Text>
           </TouchableOpacity>
 
         </View>
@@ -158,13 +136,13 @@ const MerchantInfoComponent = ({ merchant }) => {
 
           {activeTab === "terms" && (
             <Text style={styles.description}>
-              {merchant?.terms || "No terms available"}
+              {merchant?.termsAndConditions || "No terms available"}
             </Text>
           )}
 
           {activeTab === "policy" && (
             <Text style={styles.description}>
-              {merchant?.policy || "No policy available"}
+              {merchant?.privacyPolicy || "No policy available"}
             </Text>
           )}
 
@@ -188,11 +166,11 @@ const createStyles = (ui) =>
 
     container: {
       flex: 1,
-      backgroundColor: ui?.pageBgColor || "#0F0F0F"
+      backgroundColor: ui?.backgroundColor || "#0F0F0F"
     },
 
     header: {
-      backgroundColor: ui?.headerBgColor || "#111",
+      backgroundColor: "#000",
       paddingHorizontal: 18,
       paddingVertical: 18,
       flexDirection: "row",
@@ -201,17 +179,17 @@ const createStyles = (ui) =>
     },
 
     title: {
-      color: ui?.headerTextColor || "#fff",
+      color: ui?.headingColor || "#fff",
       fontSize: 18,
       fontWeight: "800"
     },
 
     card: {
-      backgroundColor: ui?.cardBgColor || "#1C1C1C",
+      backgroundColor: ui?.cardBackgroundColor || "#1C1C1C",
       padding: 20,
       borderRadius: 20,
       borderWidth: 1,
-      borderColor: ui?.cardBorderColor || "#2A2A2A",
+      borderColor: "#2A2A2A",
       marginBottom: 20
     },
 
@@ -219,7 +197,7 @@ const createStyles = (ui) =>
       fontSize: 18,
       fontWeight: "800",
       marginBottom: 12,
-      color: ui?.cardTextColor || "#fff"
+      color: ui?.headingColor || "#fff"
     },
 
     row: {
@@ -231,7 +209,7 @@ const createStyles = (ui) =>
     text: {
       marginLeft: 8,
       fontSize: 14,
-      color: ui?.cardTextColor || "#ccc"
+      color: ui?.subHeadingColor || "#ccc"
     },
 
     tabs: {
@@ -248,21 +226,21 @@ const createStyles = (ui) =>
     },
 
     activeTab: {
-      borderBottomColor: ui?.primaryColor || "#E50914"
+      borderBottomColor: ui?.actionColor || "#E50914"
     },
 
     tabText: {
-      color: "#888",
+      color: ui?.subHeadingColor || "#888",
       fontSize: 14
     },
 
     activeTabText: {
-      color: ui?.primaryColor || "#E50914",
+      color: ui?.actionColor || "#E50914",
       fontWeight: "700"
     },
 
     contentCard: {
-      backgroundColor: ui?.cardBgColor || "#1C1C1C",
+      backgroundColor: ui?.cardBackgroundColor || "#1C1C1C",
       padding: 18,
       borderRadius: 16
     },
@@ -270,7 +248,7 @@ const createStyles = (ui) =>
     description: {
       fontSize: 14,
       lineHeight: 22,
-      color: ui?.cardTextColor || "#ccc"
+      color: ui?.subHeadingColor || "#ccc"
     }
 
   });

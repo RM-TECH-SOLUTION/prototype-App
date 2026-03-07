@@ -78,12 +78,12 @@ const CategoryListComponent = ({
       <View style={dynamicStyles.card}
       >
         {!isItem && getImageUri(item) && (
-          <View style={dynamicStyles.catalogCard}>
+          <View style={[dynamicStyles.catalogCard]}>
             <Image
               source={{ uri: getImageUri(item) }}
-              style={dynamicStyles.image}
+              style={[dynamicStyles.image,{backgroundColor:"#fff"}]}
             />
-            <Text style={dynamicStyles.cardText}>
+            <Text style={[dynamicStyles.cardText2,]}>
               {item.name}
             </Text>
           </View>
@@ -638,6 +638,11 @@ const styles = (ui, CARD_WIDTH) =>
       color: ui?.cardTextColor || "#fff",
       fontWeight: "700",
       alignSelf:"flex-start"
+    },
+    cardText2: {
+      color: ui?.cardTextColor || "#fff",
+      fontWeight: "700",
+      alignSelf:"center"
     },
 
     priceText: {

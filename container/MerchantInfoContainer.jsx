@@ -1,23 +1,38 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import MerchantInfoComponent from "../component/MerchantInfoComponent";
-import useAuthStore from "../store/useAuthStore";
+import useCmsStore from "../store/useCmsStore";
 
-const MerchantInfoContainer = ({ navigation }) => {
+const MerchantInfoContainer = () => {
 
-  const registerUser = useAuthStore((state) => state.registerUser);
+  const { cmsData } = useCmsStore();
+  const [uiConfig, setUiConfig] = useState({});
+
+  useEffect(() => {
+
+    if (!Array.isArray(cmsData)) return;
+
+    const config = cmsData.find(
+      (item) => item.modelSlug === "merchantInfo"
+    );
+
+    if (!config?.cms) return;
+
+    const formatted = Object.values(config.cms).reduce((acc, field) => {
+      acc[field.fieldKey] = field.fieldValue;
+      return acc;
+    }, {});
+
+    setUiConfig(formatted);
+
+  }, [cmsData]);
+
+  console.log(uiConfig,"uiConfigkjkjkj");
+  
 
   return (
     <View style={{ flex: 1 }}>
-      <MerchantInfoComponent
-       merchant={{
-    name: "RM Fashion Store",
-    phone: "+91 9876543210",
-    location: "Hyderabad, Telangana",
-    terms: "These are the merchant terms and conditions These are the merchant terms and conditions These are the merchant terms and conditions These are the merchant terms and conditions...",
-    policy: "This is the privacy policy for the merchant..."
-  }}
-      />
+      <MerchantInfoComponent merchant={uiConfig} />
     </View>
   );
 };

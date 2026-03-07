@@ -51,8 +51,10 @@ const CheckoutComponent = ({
   const [appliedPoints, setAppliedPoints] = useState(null);
   const [pointsDiscount, setPointsDiscount] = useState(0);
   const availablePoints = profileData?.total_points || 0;
+  const enableCOD = uiConfig?.enableCOD;
+  const enableOnline = uiConfig?.enableOnline;
 
-  console.log(user, "profileDataloyaltySettingsggg");
+  console.log(uiConfig, "uiConfighhhhhh");
 
 
   /* ================= LOAD PROFILE ================= */
@@ -91,6 +93,9 @@ const CheckoutComponent = ({
     return Math.floor(maxPoints);
 
   }, [subtotal, availablePoints, loyaltySettings]);
+
+  console.log(maxRedeemablePoints,"maxRedeemablePoints");
+  
 
   const applyPoints = () => {
 
@@ -157,7 +162,9 @@ const CheckoutComponent = ({
 
   }, [cartItems, discount, pointsDiscount]);
 
-
+  
+  
+  
   const subtotal = useMemo(() => {
     let sum = 0;
     cartItems.forEach(i => {
@@ -175,6 +182,7 @@ const CheckoutComponent = ({
   /* ================= CREATE ORDER ================= */
 
 const createOrder = async (orderType) => {
+  console.log(cartItems,"cartItemsv");
   try {
     setLoading(true);
 
@@ -192,7 +200,8 @@ const createOrder = async (orderType) => {
           phone: user?.phone,
           items: cartItems,
           orderType: orderType,
-          discount: 0,
+          couponDiscount: discount || 0,
+          pointsDiscount: pointsDiscount || 0,
           address: JSON.stringify(selectedAddress || {})
         })
       }
@@ -270,7 +279,8 @@ const createOrder = async (orderType) => {
             address: JSON.stringify(selectedAddress || {}),
             amount: Number(total),
             orderType: "online",
-            discount: 0,
+            couponDiscount: discount || 0,
+            pointsDiscount: pointsDiscount || 0,
             status: "success"
           })
         }
@@ -298,7 +308,8 @@ const createOrder = async (orderType) => {
             address: JSON.stringify(selectedAddress || {}),
             amount: Number(total),
             orderType: "online",
-            discount: 0,
+            couponDiscount: discount || 0,
+            pointsDiscount: pointsDiscount || 0,
             status: "failure"
           })
         }
@@ -324,6 +335,8 @@ const createOrder = async (orderType) => {
       : item.images;
 
     return (
+      <>
+    
       <View style={styles.itemCard}>
         <View style={{ flexDirection: "row", flex: 1 }}>
           <Image source={{ uri: imageUrl }} style={styles.productImage} />
@@ -364,14 +377,16 @@ const createOrder = async (orderType) => {
           </TouchableOpacity>
         </View>
       </View>
+      </>
     );
   };
 
   /* ================= UI ================= */
 
   return (
+    <>
+    <StatusBar barStyle="light-content" backgroundColor="#000" />
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={uiConfig?.headerBgColor || "#000"} />
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -484,12 +499,12 @@ const createOrder = async (orderType) => {
               ) : (
                 <>
                   <Text style={styles.couponTitle}>
-                    Redeem Points ({availablePoints})
+                    Redeem Points (Available Points: {availablePoints})
                   </Text>
 
-                  <Text style={{ fontSize: 12, color: "#aaa", marginBottom: 3 }}>
+                  {/* <Text style={{ fontSize: 12, color: "#aaa", marginBottom: 3 }}>
                     Max Redeemable: {loyaltySettings?.max_redeem_points} points or {loyaltySettings?.max_redeem_percentage}% of your order value
-                  </Text>
+                  </Text> */}
 
                   <View style={styles.couponRow}>
                     <TextInput
@@ -571,7 +586,7 @@ const createOrder = async (orderType) => {
 
             {/* ===== PAYMENT OPTIONS ===== */}
 
-            <TouchableOpacity
+            {enableOnline == true || enableOnline == "true" && <TouchableOpacity
               style={[
                 styles.paymentOption,
                 paymentMethod === "online" && styles.activeOption
@@ -593,9 +608,9 @@ const createOrder = async (orderType) => {
                     />
                   )}</View>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity>}
 
-            <TouchableOpacity
+            {enableCOD == true || enableCOD == "true" && <TouchableOpacity
               style={[
                 styles.paymentOption,
                 paymentMethod === "COD" && styles.activeOption
@@ -617,7 +632,7 @@ const createOrder = async (orderType) => {
                     />
                   )}</View>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity>}
 
             {/* ===== PRICE BREAKDOWN ===== */}
 
@@ -673,6 +688,7 @@ const createOrder = async (orderType) => {
         </View>
       </Modal>
     </SafeAreaView>
+    </>
   );
 };
 
@@ -697,7 +713,7 @@ const createStyles = (ui) =>
     /* ================= COUPON SECTION ================= */
 
     couponContainer: {
-      borderWidth: 1,
+      borderWidth: .5,
       borderColor: ui?.primaryColor || "#E50914",
       padding: 14,
       borderRadius: 12,
@@ -735,7 +751,7 @@ const createStyles = (ui) =>
 
     couponInput: {
       flex: 1,
-      borderWidth: 1,
+      borderWidth: 2,
       borderColor: "#DDD",
       borderRadius: 8,
       paddingHorizontal: 10,
@@ -785,7 +801,7 @@ const createStyles = (ui) =>
       marginTop: 10,
       marginBottom: 18,
       borderColor: ui?.primaryColor || "#E50914",
-      borderWidth: 1,
+      borderWidth: .5,
     },
 
     priceRow: {
@@ -959,6 +975,8 @@ const createStyles = (ui) =>
       borderRadius: 12,
       backgroundColor: ui?.cardBgColor || "#2A2A2A",
       marginBottom: 10,
+      borderWidth: .5,
+      borderColor: ui?.primaryColor || "#E50914",
     },
     optionText: {
       color: ui?.cardTextColor || "#fff",

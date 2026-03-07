@@ -17,14 +17,6 @@ import { useNavigation } from "@react-navigation/native";
 
 const steps = ["pending", "accepted", "shipped", "delivered"];
 
-const OrderHistoryScreen = ({ orderHistoryResponse = [] }) => {
-
-  const navigation = useNavigation();
-
-  /* ================= PROGRESS BAR ================= */
-
-const steps = ["pending", "accepted", "shipped", "delivered"];
-
 const stepLabels = {
   pending: "Order",
   accepted: "Accepted",
@@ -32,55 +24,74 @@ const stepLabels = {
   delivered: "Delivered"
 };
 
-const renderProgress = (status) => {
+const OrderHistoryScreen = ({ orderHistoryResponse = [], uiConfig = {} }) => {
 
-  const currentStep = steps.indexOf(status?.toLowerCase());
+  const navigation = useNavigation();
 
-  return (
-    <View style={styles.progressContainer}>
+  const uiConfigs = uiConfig || {};
 
-      {steps.map((step, index) => {
+  /* fallback colors */
 
-        const active = index <= currentStep;
+  const backgroundColor = uiConfigs?.backgroundColor || "#0F0F0F";
+  const cardBackgroundColor = uiConfigs?.cardBackgroundColor || "#1C1C1C";
+  const progressBarColor = uiConfigs?.progressBarColor || "#444";
+  const progressBarFillColor = uiConfigs?.progressBarFillColor || "#4CAF50";
+  const titleColor = uiConfigs?.cardTextTitleColor || "#fff";
+  const subTitleColor = uiConfigs?.cardTextSubTitleColor || "#aaa";
 
-        return (
-          <View key={index} style={styles.step}>
+  /* ================= PROGRESS BAR ================= */
 
-            <View
-              style={[
-                styles.circle,
-                { backgroundColor: active ? "#4CAF50" : "#444" }
-              ]}
-            />
+  const renderProgress = (status) => {
 
-            {index !== steps.length - 1 && (
+    const currentStep = steps.indexOf(status?.toLowerCase());
+
+    return (
+      <View style={styles.progressContainer}>
+
+        {steps.map((step, index) => {
+
+          const active = index <= currentStep;
+
+          return (
+            <View key={index} style={styles.step}>
+
               <View
                 style={[
-                  styles.line,
-                  {
-                    backgroundColor:
-                      index < currentStep ? "#4CAF50" : "#444"
-                  }
+                  styles.circle,
+                  { backgroundColor: active ? progressBarFillColor : progressBarColor }
                 ]}
               />
-            )}
 
-            <Text
-              style={[
-                styles.stepLabel,
-                { color: active ? "#4CAF50" : "#777" }
-              ]}
-            >
-              {stepLabels[step]}
-            </Text>
+              {index !== steps.length - 1 && (
+                <View
+                  style={[
+                    styles.line,
+                    {
+                      backgroundColor:
+                        index < currentStep
+                          ? progressBarFillColor
+                          : progressBarColor
+                    }
+                  ]}
+                />
+              )}
 
-          </View>
-        );
-      })}
+              <Text
+                style={[
+                  styles.stepLabel,
+                  { color: active ? progressBarFillColor : subTitleColor }
+                ]}
+              >
+                {stepLabels[step]}
+              </Text>
 
-    </View>
-  );
-};
+            </View>
+          );
+        })}
+
+      </View>
+    );
+  };
 
   /* ================= CARD ================= */
 
@@ -105,35 +116,44 @@ const renderProgress = (status) => {
 
     return (
 
-      <View style={styles.card}>
+      <View style={[styles.card,{backgroundColor:cardBackgroundColor}]}>
 
         <View style={{flexDirection:"row"}}>
+
           <View style={{marginRight:15}}>
-        <Image source={{ uri: image }} style={styles.image} />
-        </View>
-        <View >
-          <Text style={styles.name}>
-            {name}
-          </Text>
-
-          <Text style={styles.orderId}>
-            Order ID: {item.order_id}
-          </Text>
-
-          <Text style={styles.date}>
-            Ordered on {date}
-          </Text>
-
-          <Text style={styles.price}>
-            ₹{item.amount}
-          </Text>
+            <Image source={{ uri: image }} style={styles.image} />
           </View>
+
+          <View>
+
+            <Text style={[styles.name,{color:titleColor}]}>
+              {name}
+            </Text>
+
+            {!!product?.variant_name && (
+              <Text style={{color:subTitleColor}}>
+                {product?.variant_name}
+              </Text>
+            )}
+
+            <Text style={[styles.orderId,{color:subTitleColor}]}>
+              Order ID: {item.order_id}
+            </Text>
+
+            <Text style={[styles.date,{color:subTitleColor}]}>
+              Ordered on {date}
+            </Text>
+
+            <Text style={[styles.price,{color:titleColor}]}>
+              ₹{item.amount}
+            </Text>
+
+          </View>
+
         </View>
 
         <View style={styles.info}>
-
           {renderProgress(item.order_status)}
-
         </View>
 
       </View>
@@ -144,7 +164,7 @@ const renderProgress = (status) => {
   /* ================= UI ================= */
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={[styles.container,{backgroundColor}]} edges={["top"]}>
 
       <StatusBar backgroundColor="#111" barStyle="light-content" />
 
@@ -156,7 +176,7 @@ const renderProgress = (status) => {
           <Ionicons name="chevron-back" size={26} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={styles.title}>
+        <Text style={[styles.title,{color:titleColor}]}>
           Order History
         </Text>
 
@@ -180,14 +200,12 @@ const renderProgress = (status) => {
 
 export default OrderHistoryScreen;
 
-
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
 
   container: {
-    flex: 1,
-    backgroundColor: "#0F0F0F"
+    flex: 1
   },
 
   header: {
@@ -200,14 +218,12 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "800"
   },
 
   card: {
     flexDirection: "column",
-    backgroundColor: "#1C1C1C",
     padding: 16,
     borderRadius: 20,
     marginBottom: 14
@@ -224,40 +240,27 @@ const styles = StyleSheet.create({
     marginLeft: 12
   },
 
-nameBox: {
-  backgroundColor: "#2A2A2A",
-  padding: 6,
-  borderRadius: 8,
-  marginBottom: 6
-},
-
-name: {
-  fontSize: 14,
-  fontWeight: "700",
-  color: "#fff",
-  lineHeight: 18,
-  width:"70%"
-},
+  name: {
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 18,
+    width:"70%"
+  },
 
   orderId: {
     fontSize: 12,
-    color: "#aaa",
     marginTop: 2
   },
 
   date: {
-    fontSize: 12,
-    color: "#888"
+    fontSize: 12
   },
 
   price: {
     fontSize: 16,
     fontWeight: "700",
-    marginTop: 4,
-    color: "#fff"
+    marginTop: 4
   },
-
-  /* ================= PROGRESS BAR ================= */
 
   progressContainer: {
     flexDirection: "row",

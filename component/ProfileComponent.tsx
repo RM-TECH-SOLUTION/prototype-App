@@ -21,7 +21,7 @@ const ProfileComponent = ({
   const styles = createStyles(uiConfig);
 
   /* ================= SHARE REFERRAL ================= */
-  console.log(profileData,"profileDataprofileData");
+  console.log(uiConfig,"profileDataprofileData");
   
 
   const handleShareReferral = async () => {
@@ -113,7 +113,7 @@ const ProfileComponent = ({
           <Ionicons
             name="star-outline"
             size={20}
-            color={uiConfig?.primaryColor || "#E50914"}
+            color={"gold"}
           />
           <Text style={styles.cardText}>
             {profileData?.total_points || 0} Points
@@ -185,7 +185,7 @@ const createStyles = (ui) =>
       width: 45,
       height: 45,
       borderRadius: 35,
-      backgroundColor: ui?.primaryColor || "#E50914",
+      backgroundColor: ui?.cardIconColor || "#E50914",
       justifyContent: "center",
       alignItems: "center",
       marginBottom: 5
@@ -211,7 +211,7 @@ const createStyles = (ui) =>
 
     card: {
       width: "100%",
-      backgroundColor: ui?.pageBgColor || "#111",
+      backgroundColor: "rgba(0,0,0,0.2)",
       padding: 15,
       borderRadius: 14,
       marginTop: 10
@@ -225,7 +225,8 @@ const createStyles = (ui) =>
     cardText: {
       marginLeft: 10,
       fontSize: 15,
-      color: ui?.cardTextColor || "#fff"
+      color: ui?.cardTextColor || "#fff",
+      fontWeight:"bold"
     },
 
     sectionTitle: {
@@ -248,12 +249,12 @@ const createStyles = (ui) =>
       fontSize: 18,
       fontWeight: "800",
       letterSpacing: 2,
-      color: ui?.primaryColor || "#E50914"
+      color: ui?.cardIconColor || "#E50914"
     },
 
     shareButton: {
       flexDirection: "row",
-      backgroundColor: ui?.primaryColor || "#E50914",
+      backgroundColor: ui?.cardIconColor || "#E50914",
       padding: 7,
       borderRadius: 10,
       alignItems: "center",
@@ -267,7 +268,7 @@ const createStyles = (ui) =>
     },
 
     logoutButton: {
-      backgroundColor: ui?.primaryColor || "#E50914",
+      backgroundColor: ui?.cardIconColor || "#E50914",
       paddingVertical: 10,
       paddingHorizontal: 30,
       borderRadius: 14,
