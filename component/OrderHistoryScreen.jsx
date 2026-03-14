@@ -122,6 +122,9 @@ const OrderHistoryScreen = ({ orderHistoryResponse = [], uiConfig = {} }) => {
 
           <View style={{marginRight:15}}>
             <Image source={{ uri: image }} style={styles.image} />
+             <Text style={[styles.price,{color:"gold",fontSize:12,}]}>
+              Earn Points:- {item?.earned_points}
+            </Text>
           </View>
 
           <View>
@@ -143,6 +146,10 @@ const OrderHistoryScreen = ({ orderHistoryResponse = [], uiConfig = {} }) => {
             <Text style={[styles.date,{color:subTitleColor}]}>
               Ordered on {date}
             </Text>
+            <Text style={[styles.date,{color:subTitleColor}]}>
+              Total Discount:- {item?.discount}
+            </Text>
+           
 
             <Text style={[styles.price,{color:titleColor}]}>
               ₹{item.amount}

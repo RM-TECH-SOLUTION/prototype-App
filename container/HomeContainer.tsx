@@ -24,7 +24,7 @@ const normalizeCmsFields = (cms) => {
 
 const HomeContainer = () => {
   const { cmsData, getCmsData } = useCmsStore();
-  const {getLoyaltySettings} = orderingStore();
+  const {getLoyaltySettings,getCart} = orderingStore();
 
   const [uiConfig, setUiConfig] = useState({});
   const [homeBanner, setHomeBanner] = useState(null);
@@ -34,6 +34,7 @@ const HomeContainer = () => {
   useEffect(() => {
     getCmsData();
     getLoyaltySettings();
+    getCart()
   }, []);
 
   useEffect(() => {

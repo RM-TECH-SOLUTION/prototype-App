@@ -71,30 +71,10 @@ const CheckoutComponent = ({
 
   /* ================= TOTAL ================= */
 
-  const maxRedeemablePoints = useMemo(() => {
+  console.log(loyaltySettings,"loyaltySettingsjjhjhuohoi");
+  
 
-    if (!loyaltySettings) return 0;
 
-    const maxRedeemPercentage = Number(loyaltySettings?.max_redeem_percentage || 0);
-    const pointValue = Number(loyaltySettings?.point_value || 1);
-    const maxRedeemPoints = Number(loyaltySettings?.max_redeem_points || 0);
-    const userPoints = Number(availablePoints || 0);
-
-    const percentLimit = (subtotal * maxRedeemPercentage) / 100;
-
-    const percentPoints = percentLimit / pointValue;
-
-    const maxPoints = Math.min(
-      userPoints,
-      maxRedeemPoints,
-      percentPoints
-    );
-
-    return Math.floor(maxPoints);
-
-  }, [subtotal, availablePoints, loyaltySettings]);
-
-  console.log(maxRedeemablePoints,"maxRedeemablePoints");
   
 
   const applyPoints = () => {
@@ -173,6 +153,31 @@ const CheckoutComponent = ({
     return sum;
   }, [cartItems]);
 
+    const maxRedeemablePoints = useMemo(() => {
+
+    if (!loyaltySettings) return 0;
+
+    const maxRedeemPercentage = Number(loyaltySettings?.max_redeem_percentage || 0);
+    const pointValue = Number(loyaltySettings?.point_value || 1);
+    const maxRedeemPoints = Number(loyaltySettings?.max_redeem_points || 0);
+    const userPoints = Number(availablePoints || 0);
+
+    const percentLimit = (subtotal * maxRedeemPercentage) / 100;
+
+    const percentPoints = percentLimit / pointValue;
+
+    const maxPoints = Math.min(
+      userPoints,
+      maxRedeemPoints,
+      percentPoints
+    );
+
+    return Math.floor(maxPoints);
+
+  }, [subtotal, availablePoints, loyaltySettings]);
+
+  console.log(maxRedeemablePoints,"maxRedeemablePoints");
+
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setDiscount(0);
@@ -226,7 +231,7 @@ const createOrder = async (orderType) => {
       Alert.alert("Order Placed", "Cash on Delivery selected");
       
       setShowPaymentModal(false)
-      navigation.navigate("Home");
+      navigation.navigate("OrderHistoryContainer");
 
       return; // 🔴 IMPORTANT
     }
@@ -290,7 +295,7 @@ const createOrder = async (orderType) => {
       getCart();
       Alert.alert("Success", "Payment successful");
       setShowPaymentModal(false)
-      navigation.navigate("Home");
+      navigation.navigate("OrderHistoryContainer");
 
     } else {
 
@@ -333,6 +338,9 @@ const createOrder = async (orderType) => {
     const imageUrl = Array.isArray(item.images)
       ? item.images[0]
       : item.images;
+
+      console.log(item,"itemitemitemjjjbkjkg");
+      
 
     return (
       <>
@@ -502,9 +510,9 @@ const createOrder = async (orderType) => {
                     Redeem Points (Available Points: {availablePoints})
                   </Text>
 
-                  {/* <Text style={{ fontSize: 12, color: "#aaa", marginBottom: 3 }}>
+                  <Text style={{ fontSize: 12, color: "#aaa", marginBottom: 3 }}>
                     Max Redeemable: {loyaltySettings?.max_redeem_points} points or {loyaltySettings?.max_redeem_percentage}% of your order value
-                  </Text> */}
+                  </Text>
 
                   <View style={styles.couponRow}>
                     <TextInput

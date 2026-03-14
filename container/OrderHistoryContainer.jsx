@@ -11,6 +11,7 @@ const OrderHistoryContainer = ({ navigation }) => {
     orderHistoryResponse
     } = orderingStore();
     const { cmsData } = useCmsStore();
+    const {getProfile} = useAuthStore()
 
       const [uiConfig, setUiConfig] = useState({});
     
@@ -37,6 +38,7 @@ const OrderHistoryContainer = ({ navigation }) => {
 
     useEffect(() => {    
         orderHistory()
+        getProfile()
     }, []);
 
   return (

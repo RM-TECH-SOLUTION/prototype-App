@@ -73,6 +73,12 @@ const CategoryListComponent = ({
 
   const renderCard = (item, isItem = false) => {
     const qty = getQty(item.id);
+    const isOutOfStock =
+  item?.variants?.length > 0
+    ? item.variants.every(v => v.stock === 0)
+    : item.stock === 0;
+
+
 
     return (
       <View style={dynamicStyles.card}
@@ -91,7 +97,9 @@ const CategoryListComponent = ({
 
         {isItem && (
           <View style={{justifyContent:"space-between",width:"100%",height:"100%"}}>
-          <View>
+          <View
+          
+          >
             {getImageUri(item) && (
               <TouchableOpacity style={dynamicStyles.catalogCard}
                 onPress={() => {
@@ -102,6 +110,8 @@ const CategoryListComponent = ({
                   }
                 }}
               >
+                {console.log(item,"itemitemhhh")
+                }
                 <Image
                   source={{ uri: getImageUri(item) }}
                   style={dynamicStyles.image}
@@ -109,55 +119,73 @@ const CategoryListComponent = ({
                 <Text style={dynamicStyles.cardText}
                  numberOfLines={2}
                   ellipsizeMode="tail"
+                  
                 >
                   {item.name}
                 </Text>
+                {item?.variants?.length == 0 && <Text style={dynamicStyles.cardText}>Stock:-{item?.stock}</Text>}
               </TouchableOpacity>
             )}
-            <Text style={dynamicStyles.priceText}>
-              ₹{item.price}
-            </Text>
-          </View>
-          <View>
-            {qty === 0 ? (
-              <TouchableOpacity
-                style={dynamicStyles.addButton}
-                onPress={() => {
+            <TouchableOpacity style={dynamicStyles.priceText}
+            onPress={() => {
                   if (item?.variants?.length > 0) {
                     setSelectedProduct(item);
                     setSelectedVariant(item.variants[0]);
                     setPdpVisible(true);
-                  } else {
-                    onAdd && onAdd(item);
                   }
                 }}
-              >
-                <Text style={dynamicStyles.addButtonText}>
-                  ADD
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={dynamicStyles.qtyContainer}>
-                <TouchableOpacity
-                  style={dynamicStyles.qtyButton}
-                  onPress={() => onDecrease && onDecrease(item)}
-                >
-                  <Text style={dynamicStyles.qtyText}>-</Text>
-                </TouchableOpacity>
+            >
+              <Text style={dynamicStyles.priceText}>₹{item.price}</Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+  {isOutOfStock ? (
+    <View style={{
+      marginTop:10,
+      paddingVertical:8,
+      borderRadius:12,
+      backgroundColor:"#444",
+      alignItems:"center"
+    }}>
+      <Text style={{color:"#bbb",fontWeight:"700"}}>
+        OUT OF STOCK
+      </Text>
+    </View>
+  ) : qty === 0 ? (
+    <TouchableOpacity
+      style={dynamicStyles.addButton}
+      onPress={() => {
+        if (item?.variants?.length > 0) {
+          setSelectedProduct(item);
+          setSelectedVariant(item.variants[0]);
+          setPdpVisible(true);
+        } else {
+          onAdd && onAdd(item);
+        }
+      }}
+    >
+      <Text style={dynamicStyles.addButtonText}>ADD</Text>
+    </TouchableOpacity>
+  ) : (
+    <View style={dynamicStyles.qtyContainer}>
+      <TouchableOpacity
+        style={dynamicStyles.qtyButton}
+        onPress={() => onDecrease && onDecrease(item)}
+      >
+        <Text style={dynamicStyles.qtyText}>-</Text>
+      </TouchableOpacity>
 
-                <Text style={dynamicStyles.qtyValue}>
-                  {qty}
-                </Text>
+      <Text style={dynamicStyles.qtyValue}>{qty}</Text>
 
-                <TouchableOpacity
-                  style={dynamicStyles.qtyButton}
-                  onPress={() => onIncrease && onIncrease(item)}
-                >
-                  <Text style={dynamicStyles.qtyText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            </View>
+      <TouchableOpacity
+        style={dynamicStyles.qtyButton}
+        onPress={() => onIncrease && onIncrease(item)}
+      >
+        <Text style={dynamicStyles.qtyText}>+</Text>
+      </TouchableOpacity>
+    </View>
+  )}
+</View>
           </View>
         )}
       </View>
@@ -295,7 +323,7 @@ const CategoryListComponent = ({
 
             const specText = selectedProduct.specifications || "";
             const shortSpec = specText.substring(0, 220);
-
+     
             return (
 
               <View style={{}}>
@@ -348,7 +376,7 @@ const CategoryListComponent = ({
 
                 {/* PRICE */}
                 <View style={{ flexDirection: "row", marginTop: 6 }}>
-
+                 
                   <Text style={{
                     color: "#fff",
                     fontSize: 18,
@@ -356,6 +384,7 @@ const CategoryListComponent = ({
                   }}>
                     ₹{selectedVariant?.price || selectedProduct.price}
                   </Text>
+                   
 
                   {(selectedVariant?.compare_price || selectedProduct.compare_price) && (
 
@@ -365,13 +394,17 @@ const CategoryListComponent = ({
                       textDecorationLine: "line-through"
                     }}>
                       ₹{selectedVariant?.compare_price || selectedProduct.compare_price}
+                     
                     </Text>
 
                   )}
 
                 </View>
+                 <Text style={{color:"#fff"}}>Stock-{selectedVariant?.stock}</Text>
 
                 {/* VARIANTS */}
+                {console.log(selectedProduct.variants,"selectedProduct.variants")}
+                
                 {selectedProduct.variants?.length > 0 && (
 
                   <View style={{ marginTop: 16 }}>
@@ -391,28 +424,38 @@ const CategoryListComponent = ({
                       keyExtractor={(v) => v.id.toString()}
                       renderItem={({ item }) => {
 
+                        const isStock = item.stock > 0;
                         const active = selectedVariant?.id === item.id;
+                        console.log(item,"itemitemhghjgjh");
+                        
 
                         return (
+<>
+                      <TouchableOpacity
+  disabled={!isStock}
+  style={{
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: active ? "#E50914" : "#444",
+    backgroundColor: !isStock
+      ? "#333"
+      : active
+      ? "#E50914"
+      : "#1A1A1A",
+    opacity: isStock ? 1 : 0.5
+  }}
+  onPress={() => isStock && setSelectedVariant(item)}
+>
+  <Text style={{ color: "#fff" }}>
+    {item.variant_name}
+    {!isStock ? " (Out)" : ""}
+  </Text>
+</TouchableOpacity>
 
-                          <TouchableOpacity
-                            style={{
-                              paddingVertical: 8,
-                              paddingHorizontal: 14,
-                              borderRadius: 12,
-                              marginRight: 10,
-                              borderWidth: 1,
-                              borderColor: active ? "#E50914" : "#444",
-                              backgroundColor: active ? "#E50914" : "#1A1A1A"
-                            }}
-                            onPress={() => setSelectedVariant(item)}
-                          >
-
-                            <Text style={{ color: "#fff" }}>
-                              {item.variant_name}
-                            </Text>
-
-                          </TouchableOpacity>
+</>
 
                         )
 
@@ -486,6 +529,7 @@ const CategoryListComponent = ({
           backgroundColor: "#111"
         }}
       >
+{console.log(selectedVariant?.stock,"selectedVariantjhuhutyfgkj")}
 
         <TouchableOpacity
           style={{
@@ -496,15 +540,15 @@ const CategoryListComponent = ({
             marginBottom:20
           }}
           onPress={() => {
-
-            onAdd && onAdd({
+            if (selectedVariant?.stock  != 0) {
+                onAdd && onAdd({
               ...selectedProduct,
               variant: selectedVariant
             });
 
             setPdpVisible(false);
             setShowFullSpec(false);
-
+            }
           }}
         >
 
@@ -512,7 +556,10 @@ const CategoryListComponent = ({
             color: "#fff",
             fontWeight: "800"
           }}>
-            ADD TO CART
+            {selectedVariant?.stock  == 0 ?
+          "Out Of Stock" :  "ADD TO CART"
+          }
+            
           </Text>
 
         </TouchableOpacity>
