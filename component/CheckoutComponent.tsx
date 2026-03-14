@@ -393,7 +393,7 @@ const createOrder = async (orderType) => {
 
   return (
     <>
-    <StatusBar barStyle="light-content" backgroundColor="#000" />
+    <StatusBar barStyle="light-content"/>
     <SafeAreaView style={styles.container}>
 
       {/* HEADER */}

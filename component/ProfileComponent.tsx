@@ -14,30 +14,54 @@ import useSessionStore from "../store/useSessionStore";
 const ProfileComponent = ({
   navigation,
   profileData = {},
-  uiConfig = {}
+  uiConfig = {},
+  merchantInfo
 }) => {
 
   const { user, loading, clearSession } = useSessionStore();
   const styles = createStyles(uiConfig);
+  const appLink = merchantInfo?.appLink;
+  const webLink = merchantInfo?.webLink;
+  const merchantName= merchantInfo?.merchantName
 
   /* ================= SHARE REFERRAL ================= */
-  console.log(uiConfig,"profileDataprofileData");
+  console.log(merchantInfo,"profileDataprofileData");
   
 
-  const handleShareReferral = async () => {
-    if (!profileData?.referral_code) {
-      Alert.alert("Error", "Referral code not available");
-      return;
+const handleShareReferral = async () => {
+  if (!profileData?.referral_code) {
+    Alert.alert("Error", "Referral code not available");
+    return;
+  }
+
+  try {
+
+    const storeName = merchantName || "Our Store";
+
+    let message = `🎉 *Join ${storeName}!* 🎉\n\n`;
+
+    message += `Use my referral code and start earning rewards!\n\n`;
+    message += `🔑 Referral Code: *${profileData.referral_code}*\n\n`;
+
+    if (appLink) {
+      message += `📱 Download the App:\n${appLink}\n\n`;
     }
 
-    try {
-      await Share.share({
-        message: `🎉 Join using my referral code: ${profileData.referral_code}\n\nDownload the app and earn rewards!`
-      });
-    } catch {
-      Alert.alert("Error", "Unable to share referral code");
+    if (webLink) {
+      message += `🌐 Visit the Website:\n${webLink}\n\n`;
     }
-  };
+
+    message += `✨ Sign up today and enjoy exclusive rewards!\n`;
+    message += `Don't forget to use my code during signup 🚀`;
+
+    await Share.share({
+      message
+    });
+
+  } catch {
+    Alert.alert("Error", "Unable to share referral code");
+  }
+};
 
   /* ================= LOADER ================= */
 

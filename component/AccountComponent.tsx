@@ -25,24 +25,49 @@ const AccountComponent = () => {
    const { profileData } = useSessionStore();
 
   const [uiConfig, setUiConfig] = useState<any>({});
+  const [merchantInfo, setMerchantInfo] = useState<any>({});
 
-  useEffect(() => {
-    if (!Array.isArray(cmsData)) return;
+useEffect(() => {
+  if (!Array.isArray(cmsData)) return;
 
-    const config = cmsData.find(
-      (item) => item.modelSlug === "accountPageConfiguration"
-    );
+  /* ACCOUNT PAGE CONFIG */
 
-    if (!config?.cms) return;
+  const config = cmsData.find(
+    (item) => item.modelSlug === "accountPageConfiguration"
+  );
 
+  if (config?.cms) {
     const formatted = Object.values(config.cms).reduce((acc: any, field: any) => {
       acc[field.fieldKey] = field.fieldValue;
       return acc;
     }, {});
 
     setUiConfig(formatted);
+  }
 
-  }, [cmsData]);
+  /* MERCHANT INFO */
+
+  const merchant = cmsData.find(
+    (item) => item.modelSlug === "merchantInfo"
+  );
+
+  if (merchant?.cms) {
+    const formattedMerchant = Object.values(merchant.cms).reduce(
+      (acc: any, field: any) => {
+        acc[field.fieldKey] = field.fieldValue;
+        return acc;
+      },
+      {}
+    );
+
+    setMerchantInfo(formattedMerchant);
+  }
+
+}, [cmsData]);
+
+console.log(merchantInfo,"jjgjgkgyfyumerchantInfo");
+
+
 
   useEffect(()=>{
       getProfile()
@@ -66,7 +91,7 @@ const AccountComponent = () => {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        <ProfileComponent navigation={navigation} uiConfig={uiConfig} profileData={profileData}/>
+        <ProfileComponent navigation={navigation} uiConfig={uiConfig} profileData={profileData} merchantInfo={merchantInfo}/>
 
         <Text style={styles.sectionTitle}>Account Settings</Text>
 

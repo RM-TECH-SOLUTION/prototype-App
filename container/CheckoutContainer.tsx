@@ -69,7 +69,7 @@ useEffect(() => {
   
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor:"#F57C00" }}>
+    <SafeAreaView style={{ flex: 1, width:"100%",backgroundColor:checkoutUi?.headerBgColor}}>
       <CheckoutComponent
         navigation={navigation}
         cartItems={cartItems}
