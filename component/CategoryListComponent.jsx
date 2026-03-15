@@ -53,9 +53,8 @@ const CategoryListComponent = ({
   const [activeImage, setActiveImage] = useState(null);
 
   const gridColumns = uiConfig?.gridColumns || 2;
-  const CARD_WIDTH =
-    (width - 40 - (gridColumns - 1) * 12) / gridColumns;
-
+const CARD_WIDTH =
+  (width - 42 - (gridColumns - 1) * 12) / gridColumns;
   useEffect(() => {
     const t = setTimeout(() => setModalVisible(true), 300);
     return () => clearTimeout(t);
@@ -217,15 +216,17 @@ const CategoryListComponent = ({
           </TouchableOpacity>
 
           {(
-            <FlatList
-              data={ITEMS}
-              keyExtractor={(i) => i.id.toString()}
-              numColumns={gridColumns}
-              renderItem={({ item }) =>
-                renderCard(item, true)
-              }
-              contentContainerStyle={{ paddingBottom: 120 }}
-            />
+           <FlatList
+  data={ITEMS}
+  keyExtractor={(i) => i.id.toString()}
+  numColumns={gridColumns}
+  renderItem={({ item }) => renderCard(item, true)}
+  columnWrapperStyle={{
+    justifyContent: "space-between",
+    marginBottom: 12
+  }}
+  contentContainerStyle={{ paddingBottom: 120 }}
+/>
           )}
         </>
       )}
@@ -662,13 +663,11 @@ const styles = (ui, CARD_WIDTH) =>
     },
 
     card: {
-      width: CARD_WIDTH,
-      backgroundColor:
-        ui?.cardBgColor || "#1A1A1A",
-      borderRadius: 20,
-      padding: 14,
-      margin: 6,
-    },
+  width: CARD_WIDTH,
+  backgroundColor: ui?.cardBgColor || "#1A1A1A",
+  borderRadius: 20,
+  padding: 14,
+},
 
     catalogCard: {
       alignItems: "center",
